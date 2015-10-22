@@ -20,6 +20,7 @@ describe('idToken', () => {
   context('#create', () => {
     const defaultClaims = {
       iss: 'http://example.com',
+      sub: 'Abc123',
     };
 
     it('Creates a JWT Token', () => {
@@ -62,7 +63,15 @@ describe('idToken', () => {
         'argument "privatePem" must be a RSA Private Key (PEM)');
     });
 
-    it('Throws error when claim "iss" is not a string', () => {
+    it('Throws error when claim "iss" missing', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
+      delete invlidClaims.iss;
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "iis" required (string)');
+    });
+
+    it('Throws error when claim "iss" not a string', () => {
       const invlidClaims = Object.assign({}, defaultClaims);
       invlidClaims.iss = 123;
 
@@ -70,24 +79,59 @@ describe('idToken', () => {
         'claim "iis" required (string)');
     });
 
-    it('Throws error when claim "iss" is an invalid string', () => {
+    it('Throws error when claim "iss" is invalid', () => {
       const invlidClaims = Object.assign({}, defaultClaims);
-      invlidClaims.iss = '    ';
+      invlidClaims.iss = '   ';
 
       assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
         'claim "iis" required (string)');
+    });
+
+    it.skip('Throws error when claim "iss" contains query component', () => {
+      assert.fail();
+    });
+
+    it.skip('Throws error when claim "iss" contains fragment component', () => {
+      assert.fail();
+    });
+
+    it('Throws error when claim "sub" missing', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
+      delete invlidClaims.sub;
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "sub" required (string, max 255 ASCII characters)');
+    });
+
+    it('Throws error when claim "sub" not a string', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
+      invlidClaims.sub = 12345;
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "sub" required (string, max 255 ASCII characters)');
+    });
+
+    it('Throws error when claim "sub" exceeds 255 ASCII characters', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
+      invlidClaims.sub = new Array(256 + 1).join('X');
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "sub" required (string, max 255 ASCII characters)');
     });
   });
 });
 
 describe(
+'OpenID Connect Basic Client Implementer\'s Guide 1.0 - draft 37 ' +
+'(https://openid.net/specs/openid-connect-basic-1_0-37.html#IDToken) ' +
 'The ID Token is a security token that contains Claims about the authentication of ' +
 'an End-User by an Authorization Server when using a Client, and potentially other requested ' +
 'Claims. The ID Token is represented as a JSON Web Token (JWT) [JWT].', () => {
   context(
   'The following Claims are used within the ID Token:', () => {
     const jwtIdToken = idToken.createJwt(privatePem, {
-      iss: 'https://example.com',
+      iss: 'https://EXAMPLE.com:12345/path',
+      sub: 'AItOawmwtWwcT0k51BayewNvutrJUqsvl6qs7A4',
     });
     const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
 
@@ -95,7 +139,15 @@ describe(
     'iss: REQUIRED. Issuer Identifier for the Issuer of the response. The iss value is a ' +
     'case-sensitive URL using the https scheme that contains scheme, host, and optionally, ' +
     'port number and path components and no query or fragment components.', () => {
-      assert.equal(idTokenPayload.iss, 'https://example.com');
+      assert.equal(idTokenPayload.iss, 'https://EXAMPLE.com:12345/path');
     });
+
+    it(
+    'sub: REQUIRED. Subject Identifier. Locally unique and never reassigned identifier within ' +
+    'the Issuer for the End-User, which is intended to be consumed by the Client, e.g., 24400320 ' +
+    'or AItOawmwtWwcT0k51BayewNvutrJUqsvl6qs7A4. It MUST NOT exceed 255 ASCII characters in length. ' +
+    'The sub value is a case-sensitive string.', () => {
+      assert.equal(idTokenPayload.sub, 'AItOawmwtWwcT0k51BayewNvutrJUqsvl6qs7A4');
+     });
   });
 });
