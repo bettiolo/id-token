@@ -4,10 +4,10 @@ import { assert } from 'chai';
 import jwt from 'jsonwebtoken';
 import idToken from './id-token';
 import getPem from 'rsa-pem-from-mod-exp';
-import publicJwk from '../../test/data/test1-jwk.json';
-import wrongPublicJwk from '../../test/data/test2-jwk.json';
+import publicJwk from './test-data/test1-jwk.json';
+import wrongPublicJwk from './test-data/test2-jwk.json';
 
-const privatePemPath = path.join(__dirname, `../../test/data/test1-private.pem`);
+const privatePemPath = path.join(__dirname, `./test-data/test1-private.pem`);
 const privatePem = fs.readFileSync(privatePemPath, 'ascii');
 const publicPem = getPem(publicJwk.n, publicJwk.e);
 const wrongPublicPem = getPem(wrongPublicJwk.n, wrongPublicJwk.e);
