@@ -1,7 +1,7 @@
 {
   "name": "id-token",
   "version": "0.0.1",
-  "description": "OpenID Connect Provider",
+  "description": "OpenID Connect ID Token creation library",
   "author": "Marco Bettiolo <marco@bettiolo.it>",
   "license": "ISC",
   "main": "index.js",
