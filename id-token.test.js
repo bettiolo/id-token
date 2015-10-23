@@ -11,6 +11,8 @@ import wrongPublicJwk from '../../test/data/test2-jwk.json';
 const privatePem = fs.readFileSync(privatePemPath, 'ascii');
 const publicPem = getPem(publicJwk.n, publicJwk.e);
 const wrongPublicPem = getPem(wrongPublicJwk.n, wrongPublicJwk.e);
+const nowEpoch = Math.floor(Date.now() / 1000);
+const absoluteExpiryIn1Minute = nowEpoch + 60;
 
 describe('idToken', () => {
   it('Has createJwt method', () => {
@@ -18,10 +20,12 @@ describe('idToken', () => {
   });
 
   context('#create', () => {
+
     const defaultClaims = {
       iss: 'http://example.com',
       sub: 'Abc123',
       aud: 'xyZ123',
+      exp: absoluteExpiryIn1Minute,
     };
 
     it('Creates a JWT Token', () => {
@@ -45,6 +49,7 @@ describe('idToken', () => {
       assert.equal(idTokenPayload.iss, 'http://example.com');
       assert.equal(idTokenPayload.sub, 'Abc123');
       assert.equal(idTokenPayload.aud, 'xyZ123');
+      assert.ok(idTokenPayload.exp > nowEpoch);
       // TODO: Check al the claims
     });
 
@@ -140,6 +145,14 @@ describe('idToken', () => {
 
     it('Throws error when required claim "aud" missing', () => {
       const invlidClaims = Object.assign({}, defaultClaims);
+      delete invlidClaims.aud;
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "aud" required (string OR array of strings)');
+    });
+
+    it('Throws error when required claim "aud" empty', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
       invlidClaims.aud = '';
 
       assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
@@ -187,6 +200,40 @@ describe('idToken', () => {
       assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
         'claim "aud" required (string OR array of strings)');
     });
+
+    it('Throws error when required claim "exp" missing', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
+      delete invlidClaims.exp;
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
+    });
+
+    it('Throws error when required claim "exp" is zero', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
+      invlidClaims.exp = 0;
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
+    });
+
+    it('Throws error when required claim "exp" has decimal digits', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
+      invlidClaims.exp = 12345.67;
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
+    });
+
+    it('Throws error when required claim "exp" is not a number', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
+      invlidClaims.exp = 'abc';
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
+    });
+
+    // TODO: Test that "exp" claim is bigger than "iat"
   });
 });
 
@@ -203,6 +250,7 @@ describe(
       iss: 'https://server.example.com',
       sub: '24400320',
       aud: 's6BhdRkqt3',
+      exp: absoluteExpiryIn1Minute,
     });
     const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
 
@@ -229,14 +277,11 @@ describe(
       assert.equal(idTokenPayload.aud, 's6BhdRkqt3');
     });
 
-    it.skip(
+    it(
     'exp: REQUIRED. Expiration time on or after which the ID Token MUST NOT be accepted for processing. ' +
-    'The processing of this parameter requires that the current date/time MUST be before the ' +
-    'expiration date/time listed in the value. Implementers MAY provide for some small leeway, ' +
-    'usually no more than a few minutes, to account for clock skew. Its value is a JSON [RFC7159] ' +
-    'number representing the number of seconds from 1970-01-01T00:00:00Z as measured in UTC until the ' +
-    'date/time. See RFC 3339 [RFC3339] for details regarding date/times in general and UTC in particular.', () => {
-      assert.fail();
+    '[...] Its value is a JSON [RFC7159] number representing the number of seconds from ' +
+    '1970-01-01T00:00:00Z as measured in UTC until the date/time. [...]', () => {
+      assert.ok(idTokenPayload.exp > Math.floor(Date.now() / 1000));
     });
 
     it.skip(

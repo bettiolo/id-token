@@ -8,27 +8,35 @@ function isRsaKey(pem) {
     && pem.trim().length > 60;
 }
 
-function isString(claim) {
-  return typeof (claim) === 'string'
-    && !!claim;
+function isNonEmptyString(value) {
+  return typeof (value) === 'string'
+    && !!value;
 }
 
-function isArrayOfStrings(claim) {
-  return Array.isArray(claim)
-    && claim.length > 0
-    && claim.every(isString);
+function isPositiveInteger(number) {
+  return typeof (number) === 'number'
+    && number > 0
+    && number % 1 === 0;
+}
+
+function isArrayOfStrings(array) {
+  return Array.isArray(array)
+    && array.length > 0
+    && array.every(isNonEmptyString);
 }
 
 export default {
   createJwt(privatePem, claims = {}) {
     assert.ok(isRsaKey(privatePem),
       'argument "privatePem" must be a RSA Private Key (PEM)');
-    assert.ok(isString(claims.iss) && !!claims.iss.trim(),
+    assert.ok(isNonEmptyString(claims.iss) && !!claims.iss.trim(),
       'claim "iis" required (string)');
-    assert.ok(isString(claims.sub) && claims.sub.length <= 255,
+    assert.ok(isNonEmptyString(claims.sub) && claims.sub.length <= 255,
       'claim "sub" required (string, max 255 ASCII characters)');
-    assert.ok(isString(claims.aud) || isArrayOfStrings(claims.aud),
+    assert.ok(isNonEmptyString(claims.aud) || isArrayOfStrings(claims.aud),
       'claim "aud" required (string OR array of strings)');
+    assert.ok(isPositiveInteger(claims.exp),
+      'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
 
     const options = {
       algorithm: 'RS256',
