@@ -210,6 +210,21 @@ describe('idToken', () => {
         'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
     });
 
+    it('Claim "exp" can be omitted if optional parameter expiresIn is provided', () => {
+      const claims = Object.assign({}, defaultClaims);
+      delete claims.exp;
+      const expiresIn5minutes = '5m'; // expressed in seconds or an string describing a time span rauchg/ms
+      const nowIn5MinutesEpoch = Math.floor(Date.now() / 1000) + (5 * 60) + 1;
+
+      const jwtIdToken = idToken.createJwt(privatePem, claims, expiresIn5minutes);
+      const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
+
+      assert.isObject(idTokenPayload);
+      assert.ok(idTokenPayload.exp > nowEpoch);
+      assert.ok(idTokenPayload.exp > absoluteExpiryIn1Minute);
+      assert.ok(idTokenPayload.exp < nowIn5MinutesEpoch);
+    });
+
     // TODO: Test that "exp" claim is bigger than "iat"
   });
 });

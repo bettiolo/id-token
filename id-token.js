@@ -26,7 +26,7 @@ function isArrayOfStrings(array) {
 }
 
 export default {
-  createJwt(privatePem, claims = {}) {
+  createJwt(privatePem, claims = {}, expiresIn) {
     assert.ok(isRsaKey(privatePem),
       'argument "privatePem" must be a RSA Private Key (PEM)');
     assert.ok(isNonEmptyString(claims.iss) && !!claims.iss.trim(),
@@ -35,11 +35,12 @@ export default {
       'claim "sub" required (string, max 255 ASCII characters)');
     assert.ok(isNonEmptyString(claims.aud) || isArrayOfStrings(claims.aud),
       'claim "aud" required (string OR array of strings)');
-    assert.ok(isPositiveInteger(claims.exp),
+    assert.ok(isPositiveInteger(claims.exp) || !!expiresIn,
       'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
 
     const options = {
       algorithm: 'RS256',
+      expiresIn,
     };
 
     return jwt.sign(claims, privatePem, options);
