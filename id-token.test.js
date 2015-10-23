@@ -21,6 +21,7 @@ describe('idToken', () => {
     const defaultClaims = {
       iss: 'http://example.com',
       sub: 'Abc123',
+      aud: 'xyZ123',
     };
 
     it('Creates a JWT Token', () => {
@@ -41,8 +42,10 @@ describe('idToken', () => {
       const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
 
       assert.isObject(idTokenPayload);
-      assert.equal(idTokenPayload.iss, defaultClaims.iss);
-      // TODO: add more checks
+      assert.equal(idTokenPayload.iss, 'http://example.com');
+      assert.equal(idTokenPayload.sub, 'Abc123');
+      assert.equal(idTokenPayload.aud, 'xyZ123');
+      // TODO: Check al the claims
     });
 
     it('Does not validate JWT ID Token with wrong RSA Public Key (PEM)', (done) => {
@@ -63,7 +66,7 @@ describe('idToken', () => {
         'argument "privatePem" must be a RSA Private Key (PEM)');
     });
 
-    it('Throws error when claim "iss" missing', () => {
+    it('Throws error when required claim "iss" missing', () => {
       const invlidClaims = Object.assign({}, defaultClaims);
       delete invlidClaims.iss;
 
@@ -74,6 +77,14 @@ describe('idToken', () => {
     it('Throws error when claim "iss" not a string', () => {
       const invlidClaims = Object.assign({}, defaultClaims);
       invlidClaims.iss = 123;
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "iis" required (string)');
+    });
+
+    it('Throws error when claim "iss" is empty', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
+      invlidClaims.iss = '';
 
       assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
         'claim "iis" required (string)');
@@ -95,9 +106,17 @@ describe('idToken', () => {
       assert.fail();
     });
 
-    it('Throws error when claim "sub" missing', () => {
+    it('Throws error when required claim "sub" missing', () => {
       const invlidClaims = Object.assign({}, defaultClaims);
       delete invlidClaims.sub;
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "sub" required (string, max 255 ASCII characters)');
+    });
+
+    it('Throws error when required claim "sub" empty', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
+      invlidClaims.sub = '';
 
       assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
         'claim "sub" required (string, max 255 ASCII characters)');
@@ -118,6 +137,56 @@ describe('idToken', () => {
       assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
         'claim "sub" required (string, max 255 ASCII characters)');
     });
+
+    it('Throws error when required claim "aud" missing', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
+      invlidClaims.aud = '';
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "aud" required (string OR array of strings)');
+    });
+
+    it('Throws error when claim "aud" not a string', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
+      invlidClaims.aud = 12345;
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "aud" required (string OR array of strings)');
+    });
+
+    it('Claim "aud" can be an array of strings', () => {
+      const claims = Object.assign({}, defaultClaims);
+      claims.aud = ['Foo1', 'bar2'];
+
+      const jwtIdToken = idToken.createJwt(privatePem, claims);
+      const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
+
+      assert.deepEqual(idTokenPayload.aud, ['Foo1', 'bar2']);
+    });
+
+    it('Throws error when required claim "aud" is an array with no elements', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
+      invlidClaims.aud = [];
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "aud" required (string OR array of strings)');
+    });
+
+    it('Throws error when required claim "aud" is an array of empty strings', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
+      invlidClaims.aud = [''];
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "aud" required (string OR array of strings)');
+    });
+
+    it('Throws error when claim "aud" not an array of strings', () => {
+      const invlidClaims = Object.assign({}, defaultClaims);
+      invlidClaims.aud = [ 12345 ];
+
+      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        'claim "aud" required (string OR array of strings)');
+    });
   });
 });
 
@@ -131,8 +200,9 @@ describe(
   context(
   'The following Claims are used within the ID Token:', () => {
     const jwtIdToken = idToken.createJwt(privatePem, {
-      iss: 'https://EXAMPLE.com:12345/path',
-      sub: 'AItOawmwtWwcT0k51BayewNvutrJUqsvl6qs7A4',
+      iss: 'https://server.example.com',
+      sub: '24400320',
+      aud: 's6BhdRkqt3',
     });
     const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
 
@@ -140,7 +210,7 @@ describe(
     'iss: REQUIRED. Issuer Identifier for the Issuer of the response. The iss value is a ' +
     'case-sensitive URL using the https scheme that contains scheme, host, and optionally, ' +
     'port number and path components and no query or fragment components.', () => {
-      assert.equal(idTokenPayload.iss, 'https://EXAMPLE.com:12345/path');
+      assert.equal(idTokenPayload.iss, 'https://server.example.com');
     });
 
     it(
@@ -148,15 +218,15 @@ describe(
     'the Issuer for the End-User, which is intended to be consumed by the Client, e.g., 24400320 ' +
     'or AItOawmwtWwcT0k51BayewNvutrJUqsvl6qs7A4. It MUST NOT exceed 255 ASCII characters in length. ' +
     'The sub value is a case-sensitive string.', () => {
-      assert.equal(idTokenPayload.sub, 'AItOawmwtWwcT0k51BayewNvutrJUqsvl6qs7A4');
+      assert.equal(idTokenPayload.sub, '24400320');
     });
 
-    it.skip(
+    it(
     'aud: REQUIRED. Audience(s) that this ID Token is intended for. It MUST contain the OAuth 2.0 ' +
     'client_id of the Relying Party as an audience value. It MAY also contain identifiers for other ' +
     'audiences. In the general case, the aud value is an array of case-sensitive strings. In the common ' +
     'special case when there is one audience, the aud value MAY be a single case-sensitive string.', () => {
-      assert.fail();
+      assert.equal(idTokenPayload.aud, 's6BhdRkqt3');
     });
 
     it.skip(
