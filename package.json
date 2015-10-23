@@ -6,10 +6,15 @@
   "license": "ISC",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --compilers js:babel/register -R spec -b ./src/**/*.test.js ./src/**/*.spec.js",
-    "lint": "eslint ./"
+    "clean": "rm -f index.js",
+    "lint": "eslint ./",
+    "test": "mocha --compilers js:babel/register -R spec -b ./src/**/*.test.js",
+    "compile": "babel --optional runtime src/id-token.js --out-file ./index.js",
+    "test-spec": "mocha --compilers js:babel/register -R spec -b ./id-token.spec.js",
+    "prepublish": "npm run clean && npm run lint && npm run test && npm run compile && npm run test-spec"
   },
   "dependencies": {
+    "babel-runtime": "^5.8.25",
     "jsonwebtoken": "^5.4.0"
   },
   "devDependencies": {
