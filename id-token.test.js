@@ -225,6 +225,13 @@ describe('idToken', () => {
       assert.ok(idTokenPayload.exp < nowIn5MinutesEpoch);
     });
 
+    it('Claim "exp" and parameter expiresIn are mutually exclusive', () => {
+      const expiresIn5minutes = '5m'; // expressed in seconds or an string describing a time span rauchg/ms
+
+      assert.throw(() => idToken.createJwt(privatePem, defaultClaims, expiresIn5minutes),
+        'claim "exp" and parameter expiresIn are mutually exclusive');
+    });
+
     // TODO: Test that "exp" claim is bigger than "iat"
   });
 });

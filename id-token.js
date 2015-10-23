@@ -37,6 +37,8 @@ export default {
       'claim "aud" required (string OR array of strings)');
     assert.ok(isPositiveInteger(claims.exp) || !!expiresIn,
       'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
+    assert.ok(!(claims.exp && expiresIn),
+      'claim "exp" and parameter expiresIn are mutually exclusive');
 
     const options = {
       algorithm: 'RS256',
