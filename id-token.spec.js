@@ -57,12 +57,13 @@ describe(
           '[...] Its value is a JSON [RFC7159] number representing the number of seconds from ' +
           '1970-01-01T00:00:00Z as measured in UTC until the date/time. [...]', () => {
             assert.ok(idTokenPayload.exp > nowEpoch);
+            assert.ok(idTokenPayload.exp > idTokenPayload.iat);
           });
 
-        it.skip(
+        it(
           'iat: REQUIRED. Time at which the JWT was issued. Its value is a JSON number representing the number ' +
           'of seconds from 1970-01-01T00:00:00Z as measured in UTC until the date/time.', () => {
-            assert.fail();
+            assert.ok(idTokenPayload.iat >= nowEpoch);
           });
 
         it.skip(

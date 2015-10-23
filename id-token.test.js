@@ -77,6 +77,8 @@ describe('idToken', () => {
       assert.equal(idTokenPayload.sub, 'Abc123');
       assert.equal(idTokenPayload.aud, 'xyZ123');
       assert.ok(idTokenPayload.exp > nowEpoch);
+      assert.ok(idTokenPayload.iat >= nowEpoch);
+      assert.ok(idTokenPayload.iat < idTokenPayload.exp);
       // TODO: Check al the claims
     });
 
@@ -231,7 +233,5 @@ describe('idToken', () => {
       assert.throw(() => idToken.createJwt(privatePem, defaultClaims, expiresIn5minutes),
         'claim "exp" and parameter expiresIn are mutually exclusive');
     });
-
-    // TODO: Test that "exp" claim is bigger than "iat"
   });
 });
