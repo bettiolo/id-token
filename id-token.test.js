@@ -28,6 +28,33 @@ describe('idToken', () => {
       exp: absoluteExpiryIn1Minute,
     };
 
+    function itThrowsErrorWhenRequiredClaimMissing(claim, expectedError) {
+      it(`Throws error when required claim "${claim}" missing`, () => {
+        const invalidClaims = Object.assign({}, defaultClaims);
+        delete invalidClaims[claim];
+
+        assert.throw(() => idToken.createJwt(privatePem, invalidClaims), expectedError);
+      });
+    }
+
+    function itThrowsErrorWhenClaimIsNotAString(claim, expectedError) {
+      it(`Throws error when claim "${claim}" not a string`, () => {
+        const invalidClaims = Object.assign({}, defaultClaims);
+        invalidClaims[claim] = 12345;
+
+        assert.throw(() => idToken.createJwt(privatePem, invalidClaims), expectedError);
+      });
+    }
+
+    function itThrowsErrorWhenClaimIsEmpty(claim, expectedError) {
+      it(`Throws error when claim "${claim}" is empty`, () => {
+        const invalidClaims = Object.assign({}, defaultClaims);
+        invalidClaims[claim] = '';
+
+        assert.throw(() => idToken.createJwt(privatePem, invalidClaims), expectedError);
+      });
+    }
+
     it('Creates a JWT Token', () => {
       const jwtIdToken = idToken.createJwt(privatePem, defaultClaims);
 
@@ -71,29 +98,14 @@ describe('idToken', () => {
         'argument "privatePem" must be a RSA Private Key (PEM)');
     });
 
-    it('Throws error when required claim "iss" missing', () => {
-      const invlidClaims = Object.assign({}, defaultClaims);
-      delete invlidClaims.iss;
+    itThrowsErrorWhenRequiredClaimMissing('iss',
+      'claim "iis" required (string)');
 
-      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
-        'claim "iis" required (string)');
-    });
+    itThrowsErrorWhenClaimIsNotAString('iss',
+      'claim "iis" required (string)');
 
-    it('Throws error when claim "iss" not a string', () => {
-      const invlidClaims = Object.assign({}, defaultClaims);
-      invlidClaims.iss = 123;
-
-      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
-        'claim "iis" required (string)');
-    });
-
-    it('Throws error when claim "iss" is empty', () => {
-      const invlidClaims = Object.assign({}, defaultClaims);
-      invlidClaims.iss = '';
-
-      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
-        'claim "iis" required (string)');
-    });
+    itThrowsErrorWhenClaimIsEmpty('iss',
+      'claim "iis" required (string)');
 
     it('Throws error when claim "iss" is invalid', () => {
       const invlidClaims = Object.assign({}, defaultClaims);
@@ -111,29 +123,14 @@ describe('idToken', () => {
       assert.fail();
     });
 
-    it('Throws error when required claim "sub" missing', () => {
-      const invlidClaims = Object.assign({}, defaultClaims);
-      delete invlidClaims.sub;
+    itThrowsErrorWhenRequiredClaimMissing('sub',
+      'claim "sub" required (string, max 255 ASCII characters)');
 
-      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
-        'claim "sub" required (string, max 255 ASCII characters)');
-    });
+    itThrowsErrorWhenClaimIsEmpty('sub',
+      'claim "sub" required (string, max 255 ASCII characters)');
 
-    it('Throws error when required claim "sub" empty', () => {
-      const invlidClaims = Object.assign({}, defaultClaims);
-      invlidClaims.sub = '';
-
-      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
-        'claim "sub" required (string, max 255 ASCII characters)');
-    });
-
-    it('Throws error when claim "sub" not a string', () => {
-      const invlidClaims = Object.assign({}, defaultClaims);
-      invlidClaims.sub = 12345;
-
-      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
-        'claim "sub" required (string, max 255 ASCII characters)');
-    });
+    itThrowsErrorWhenClaimIsNotAString('sub',
+      'claim "sub" required (string, max 255 ASCII characters)');
 
     it('Throws error when claim "sub" exceeds 255 ASCII characters', () => {
       const invlidClaims = Object.assign({}, defaultClaims);
@@ -143,29 +140,14 @@ describe('idToken', () => {
         'claim "sub" required (string, max 255 ASCII characters)');
     });
 
-    it('Throws error when required claim "aud" missing', () => {
-      const invlidClaims = Object.assign({}, defaultClaims);
-      delete invlidClaims.aud;
+    itThrowsErrorWhenRequiredClaimMissing('aud',
+      'claim "aud" required (string OR array of strings)');
 
-      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
-        'claim "aud" required (string OR array of strings)');
-    });
+    itThrowsErrorWhenClaimIsEmpty('aud',
+      'claim "aud" required (string OR array of strings)');
 
-    it('Throws error when required claim "aud" empty', () => {
-      const invlidClaims = Object.assign({}, defaultClaims);
-      invlidClaims.aud = '';
-
-      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
-        'claim "aud" required (string OR array of strings)');
-    });
-
-    it('Throws error when claim "aud" not a string', () => {
-      const invlidClaims = Object.assign({}, defaultClaims);
-      invlidClaims.aud = 12345;
-
-      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
-        'claim "aud" required (string OR array of strings)');
-    });
+    itThrowsErrorWhenClaimIsNotAString('aud',
+      'claim "aud" required (string OR array of strings)');
 
     it('Claim "aud" can be an array of strings', () => {
       const claims = Object.assign({}, defaultClaims);
@@ -201,13 +183,8 @@ describe('idToken', () => {
         'claim "aud" required (string OR array of strings)');
     });
 
-    it('Throws error when required claim "exp" missing', () => {
-      const invlidClaims = Object.assign({}, defaultClaims);
-      delete invlidClaims.exp;
-
-      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
-        'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
-    });
+    itThrowsErrorWhenRequiredClaimMissing('exp',
+      'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
 
     it('Throws error when required claim "exp" is zero', () => {
       const invlidClaims = Object.assign({}, defaultClaims);
