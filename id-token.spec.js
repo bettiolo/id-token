@@ -68,8 +68,8 @@ describe(
 
         it.skip(
           'auth_time: Time when the End-User authentication occurred. Its value is a JSON number representing ' +
-          'the number of seconds from 1970-01-01T00:00:00Z as measured in UTC until the date/time. When a ' +
-          'max_age request is made then this Claim is REQUIRED; otherwise, its inclusion is OPTIONAL.', () => {
+          'the number of seconds from 1970-01-01T00:00:00Z as measured in UTC until the date/time. [...] ' +
+          'its inclusion is OPTIONAL.', () => {
             assert.fail();
           });
 
