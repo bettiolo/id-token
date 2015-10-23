@@ -3,6 +3,7 @@
   "version": "0.0.3",
   "description": "OpenID Connect ID Token",
   "author": "Marco Bettiolo <marco@bettiolo.it>",
+  "repository": "bettiolo/id-token",
   "license": "ISC",
   "main": "index.js",
   "scripts": {
@@ -32,5 +33,6 @@
     "idtoken",
     "openid-connect",
     "openid"
-  ]
+  ],
+  "publishConfig": { "registry": "https://registry.npmjs.org/" }
 }
