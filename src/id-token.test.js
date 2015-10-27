@@ -27,6 +27,7 @@ describe('idToken', () => {
       aud: 'xyZ123',
       exp: absoluteExpiryIn1Minute,
       auth_time: nowEpoch,
+      nonce: 'vr2MrVSjyfu0UbrOtjWG',
     };
 
     function itThrowsErrorWhenRequiredClaimMissing(claim, expectedError) {
@@ -74,6 +75,19 @@ describe('idToken', () => {
       });
     }
 
+    function itIgnoresMissingOptionalClaim(claim) {
+      it(`It ignores missing optional claim "${claim}"`, () => {
+        const claims = Object.assign({}, defaultClaims);
+        delete claims[claim];
+
+        const jwtIdToken = idToken.createJwt(privatePem, claims);
+        const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
+
+        assert.isObject(idTokenPayload);
+        assert.ok(!idTokenPayload[claim]);
+      });
+    }
+
     it('Creates a JWT Token', () => {
       const jwtIdToken = idToken.createJwt(privatePem, defaultClaims);
 
@@ -99,7 +113,8 @@ describe('idToken', () => {
       assert.ok(idTokenPayload.iat >= nowEpoch);
       assert.ok(idTokenPayload.iat < idTokenPayload.exp);
       assert.equal(idTokenPayload.auth_time, nowEpoch);
-      // TODO: Check al the claims
+      assert.equal(idTokenPayload.nonce, 'vr2MrVSjyfu0UbrOtjWG');
+      // TODO: Check all the claims
     });
 
     it('Does not validate JWT ID Token with wrong RSA Public Key (PEM)', (done) => {
@@ -222,7 +237,7 @@ describe('idToken', () => {
     itThrowsErrorWhenClaimIsNotNumber('exp',
       'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
 
-    it('Claim "exp" can be omitted if optional parameter expiresIn is provided', () => {
+    it('Ignores missing claim "exp" if optional parameter "expiresIn" is provided', () => {
       const claims = Object.assign({}, defaultClaims);
       delete claims.exp;
       const expiresIn5minutes = '5m'; // expressed in seconds or an string describing a time span rauchg/ms
@@ -237,28 +252,24 @@ describe('idToken', () => {
       assert.ok(idTokenPayload.exp < nowIn5MinutesEpoch);
     });
 
-    it('Claim "exp" and parameter expiresIn are mutually exclusive', () => {
+    it('Throws error because claim "exp" and parameter "expiresIn" are mutually exclusive', () => {
       const expiresIn5minutes = '5m'; // expressed in seconds or an string describing a time span rauchg/ms
 
       assert.throw(() => idToken.createJwt(privatePem, defaultClaims, expiresIn5minutes),
         'claim "exp" and parameter expiresIn are mutually exclusive');
     });
 
-    it('Optional claim "auth_time" can be omitted', () => {
-      const claims = Object.assign({}, defaultClaims);
-      delete claims.auth_time;
-
-      const jwtIdToken = idToken.createJwt(privatePem, claims);
-      const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
-
-      assert.isObject(idTokenPayload);
-      assert.equal(idTokenPayload.iss, 'http://example.com');
-    });
+    itIgnoresMissingOptionalClaim('auth_time');
 
     itThrowsErrorWhenClaimHasDecimalDigits('auth_time',
       'claim "auth_time" optional (number of seconds from 1970-01-01T00:00:00Z in UTC)');
 
     itThrowsErrorWhenClaimIsNotNumber('auth_time',
       'claim "auth_time" optional (number of seconds from 1970-01-01T00:00:00Z in UTC)');
+
+    itIgnoresMissingOptionalClaim('nonce');
+
+    itThrowsErrorWhenClaimIsNotString('nonce',
+      'claim "nonce" optional (string)');
   });
 });

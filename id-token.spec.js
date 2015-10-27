@@ -27,6 +27,7 @@ describe(
       aud: 's6BhdRkqt3',
       exp: absoluteExpiryIn1Minute,
       auth_time: nowEpoch,
+      nonce: 'vr2MrVSjyfu0UbrOtjWG',
     });
     const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
 
@@ -74,14 +75,13 @@ describe(
       assert.equal(idTokenPayload.auth_time, nowEpoch);
     });
 
-    it.skip(
+    it(
     'nonce: OPTIONAL. String value used to associate a Client session with an ID Token, and to ' +
     'mitigate replay attacks. The value is passed through unmodified from the Authentication Request ' +
-    'to the ID Token. The Client MUST verify that the nonce Claim Value is equal to the value of the ' +
-    'nonce parameter sent in the Authentication Request. If present in the Authentication Request, ' +
-    'Authorization Servers MUST include a nonce Claim in the ID Token with the Claim Value being ' +
-    'the nonce value sent in the Authentication Request. The nonce value is a case-sensitive string.', () => {
-      assert.fail();
+    'to the ID Token. [...] If present in the Authentication Request, Authorization Servers MUST ' +
+    'include a nonce Claim in the ID Token with the Claim Value being the nonce value sent in the ' +
+    'Authentication Request. The nonce value is a case-sensitive string.', () => {
+      assert.equal(idTokenPayload.nonce, 'vr2MrVSjyfu0UbrOtjWG');
     });
 
     it.skip(
