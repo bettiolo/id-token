@@ -13,11 +13,47 @@ const publicPem = getPem(publicJwk.n, publicJwk.e);
 const wrongPublicPem = getPem(wrongPublicJwk.n, wrongPublicJwk.e);
 
 describe('idToken', () => {
-  it('Has createJwt method', () => {
+  it(`Has expected methods`, () => {
     assert.isFunction(idToken.createJwt);
+    assert.isFunction(idToken.computeHash);
   });
 
-  context('create()', () => {
+  context(`${idToken.computeHash.name}()`, () => {
+    it('Computes sha256 access token hash (at_hash) for algorithm RS256', () => {
+      // Based on: http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.A.3
+      const accessToken = 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y';
+      const atHash = idToken.computeHash('RS256', accessToken);
+
+      assert.equal(atHash, '77QmUPtjPfzWtF2AnpK9RQ');
+    });
+
+    it('Computes sha256 code hash (c_hash) for algorithm RS256', () => {
+      // Based on: http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.A.4
+      const code = 'Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk';
+      const cHash = idToken.computeHash('RS256', code);
+
+      assert.equal(cHash, 'LDktKdoQak3Pk0cnXxCltA');
+    });
+
+    it('Throws an error if algorithm unknown', () => {
+      const invalidAlgorithm = 'AB123';
+
+      assert.throw(() => idToken.computeHash(invalidAlgorithm, 'any-access-token-or-code'),
+        'Invalid algorithm');
+    });
+
+    it('Throws an error if access token or code missing', () => {
+      assert.throw(() => idToken.computeHash('HS512'),
+        'Argument "accessTokenOrCode" required (string)');
+    });
+
+    it('Throws an error if access token or code not a string', () => {
+      assert.throw(() => idToken.computeHash('HS512', 12345),
+        'Argument "accessTokenOrCode" required (string)');
+    });
+  });
+
+  context(`${idToken.createJwt.name}()`, () => {
     const nowEpoch = Math.floor(Date.now() / 1000);
     const absoluteExpiryIn1Minute = nowEpoch + 60;
 

@@ -85,18 +85,6 @@ describe(
     });
 
     it.skip(
-    'at_hash: OPTIONAL. Access Token hash value. This is OPTIONAL when the ID Token is issued ' +
-    'from the Token Endpoint, which is the case for this subset of OpenID Connect; nonetheless, ' +
-    'an at_hash Claim MAY be present. Its value is the base64url encoding of the left-most half of ' +
-    'the hash of the octets of the ASCII representation of the access_token value, where the hash ' +
-    'algorithm used is the hash algorithm used in the alg Header Parameter of the ID Token\'s ' +
-    'JOSE Header. For instance, if the alg is RS256, hash the access_token value with SHA-256, ' +
-    'then take the left-most 128 bits and base64url-encode them. The at_hash value is a case-sensitive ' +
-    'string.', () => {
-      assert.fail();
-    });
-
-    it.skip(
     'acr: OPTIONAL. Authentication Context Class Reference. String specifying an Authentication ' +
     'Context Class Reference value that identifies the Authentication Context Class that the ' +
     'authentication performed satisfied. The value "0" indicates the End-User authentication did ' +
@@ -140,5 +128,34 @@ describe(
     'parameters.', () => {
       assert.fail();
     });
+
+    // Additional claim: http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.3.2.11
+    it.skip(
+    'at_hash: Access Token hash value. Its value is the base64url encoding of the left-most half of ' +
+    'the hash of the octets of the ASCII representation of the access_token value, where the hash ' +
+    'algorithm used is the hash algorithm used in the alg Header Parameter of the ID Token\'s JOSE ' +
+    'Header. For instance, if the alg is RS256, hash the access_token value with SHA-256, then take ' +
+    'the left-most 128 bits and base64url encode them. The at_hash value is a case sensitive string. ' +
+    'If the ID Token is issued from the Authorization Endpoint with an access_token value, which is ' +
+    'the case for the response_type value code id_token token, this is REQUIRED; otherwise, its ' +
+    'inclusion is OPTIONAL.', () => {
+      assert.fail();
+    });
+
+    // Additional claim: http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.3.2.11
+    it.skip(
+    'c_hash: Code hash value. Its value is the base64url encoding of the left-most half of the hash ' +
+    'of the octets of the ASCII representation of the code value, where the hash algorithm used is ' +
+    'the hash algorithm used in the alg Header Parameter of the ID Token\'s JOSE Header. For instance, ' +
+    'if the alg is HS512, hash the code value with SHA-512, then take the left-most 256 bits and ' +
+    'base64url encode them. The c_hash value is a case sensitive string. If the ID Token is issued ' +
+    'from the Authorization Endpoint with a code, which is the case for the response_type values ' +
+    'code id_token and code id_token token, this is REQUIRED; otherwise, its inclusion is ' +
+    'OPTIONAL.', () => {
+      assert.fail();
+    });
   });
 });
+
+// TODO: Update the spec to use the wording of http://openid.net/specs/openid-connect-core-1_0.html
+// TODO: Test spec Examples: http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.A
