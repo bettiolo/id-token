@@ -39,6 +39,8 @@ export default {
       'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
     assert.ok(!(claims.exp && expiresIn),
       'claim "exp" and parameter expiresIn are mutually exclusive');
+    assert.ok(!claims.auth_time || isPositiveInteger(claims.auth_time),
+      'claim "auth_time" optional (number of seconds from 1970-01-01T00:00:00Z in UTC)');
 
     const options = {
       algorithm: 'RS256',

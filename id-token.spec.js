@@ -26,6 +26,7 @@ describe(
       sub: '24400320',
       aud: 's6BhdRkqt3',
       exp: absoluteExpiryIn1Minute,
+      auth_time: nowEpoch,
     });
     const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
 
@@ -66,11 +67,11 @@ describe(
       assert.ok(idTokenPayload.iat >= nowEpoch);
     });
 
-    it.skip(
+    it(
     'auth_time: Time when the End-User authentication occurred. Its value is a JSON number representing ' +
     'the number of seconds from 1970-01-01T00:00:00Z as measured in UTC until the date/time. [...] ' +
     'its inclusion is OPTIONAL.', () => {
-      assert.fail();
+      assert.equal(idTokenPayload.auth_time, nowEpoch);
     });
 
     it.skip(

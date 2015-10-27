@@ -26,6 +26,7 @@ describe('idToken', () => {
       sub: 'Abc123',
       aud: 'xyZ123',
       exp: absoluteExpiryIn1Minute,
+      auth_time: nowEpoch,
     };
 
     function itThrowsErrorWhenRequiredClaimMissing(claim, expectedError) {
@@ -37,7 +38,7 @@ describe('idToken', () => {
       });
     }
 
-    function itThrowsErrorWhenClaimIsNotAString(claim, expectedError) {
+    function itThrowsErrorWhenClaimIsNotString(claim, expectedError) {
       it(`Throws error when claim "${claim}" not a string`, () => {
         const invalidClaims = Object.assign({}, defaultClaims);
         invalidClaims[claim] = 12345;
@@ -52,6 +53,24 @@ describe('idToken', () => {
         invalidClaims[claim] = '';
 
         assert.throw(() => idToken.createJwt(privatePem, invalidClaims), expectedError);
+      });
+    }
+
+    function itThrowsErrorWhenClaimHasDecimalDigits(claim, expectedError) {
+      it(`Throws error when claim "${claim}" has decimal digits`, () => {
+        const invlidClaims = Object.assign({}, defaultClaims);
+        invlidClaims[claim] = 12345.67;
+
+        assert.throw(() => idToken.createJwt(privatePem, invlidClaims), expectedError);
+      });
+    }
+
+    function itThrowsErrorWhenClaimIsNotNumber(claim, expectedError) {
+      it(`Throws error when claim "${claim}" is not a number`, () => {
+        const invlidClaims = Object.assign({}, defaultClaims);
+        invlidClaims[claim] = 'abc';
+
+        assert.throw(() => idToken.createJwt(privatePem, invlidClaims), expectedError);
       });
     }
 
@@ -79,6 +98,7 @@ describe('idToken', () => {
       assert.ok(idTokenPayload.exp > nowEpoch);
       assert.ok(idTokenPayload.iat >= nowEpoch);
       assert.ok(idTokenPayload.iat < idTokenPayload.exp);
+      assert.equal(idTokenPayload.auth_time, nowEpoch);
       // TODO: Check al the claims
     });
 
@@ -103,7 +123,7 @@ describe('idToken', () => {
     itThrowsErrorWhenRequiredClaimMissing('iss',
       'claim "iis" required (string)');
 
-    itThrowsErrorWhenClaimIsNotAString('iss',
+    itThrowsErrorWhenClaimIsNotString('iss',
       'claim "iis" required (string)');
 
     itThrowsErrorWhenClaimIsEmpty('iss',
@@ -131,7 +151,7 @@ describe('idToken', () => {
     itThrowsErrorWhenClaimIsEmpty('sub',
       'claim "sub" required (string, max 255 ASCII characters)');
 
-    itThrowsErrorWhenClaimIsNotAString('sub',
+    itThrowsErrorWhenClaimIsNotString('sub',
       'claim "sub" required (string, max 255 ASCII characters)');
 
     it('Throws error when claim "sub" exceeds 255 ASCII characters', () => {
@@ -148,7 +168,7 @@ describe('idToken', () => {
     itThrowsErrorWhenClaimIsEmpty('aud',
       'claim "aud" required (string OR array of strings)');
 
-    itThrowsErrorWhenClaimIsNotAString('aud',
+    itThrowsErrorWhenClaimIsNotString('aud',
       'claim "aud" required (string OR array of strings)');
 
     it('Claim "aud" can be an array of strings', () => {
@@ -196,21 +216,11 @@ describe('idToken', () => {
         'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
     });
 
-    it('Throws error when required claim "exp" has decimal digits', () => {
-      const invlidClaims = Object.assign({}, defaultClaims);
-      invlidClaims.exp = 12345.67;
+    itThrowsErrorWhenClaimHasDecimalDigits('exp',
+      'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
 
-      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
-        'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
-    });
-
-    it('Throws error when required claim "exp" is not a number', () => {
-      const invlidClaims = Object.assign({}, defaultClaims);
-      invlidClaims.exp = 'abc';
-
-      assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
-        'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
-    });
+    itThrowsErrorWhenClaimIsNotNumber('exp',
+      'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
 
     it('Claim "exp" can be omitted if optional parameter expiresIn is provided', () => {
       const claims = Object.assign({}, defaultClaims);
@@ -233,5 +243,22 @@ describe('idToken', () => {
       assert.throw(() => idToken.createJwt(privatePem, defaultClaims, expiresIn5minutes),
         'claim "exp" and parameter expiresIn are mutually exclusive');
     });
+
+    it('Optional claim "auth_time" can be omitted', () => {
+      const claims = Object.assign({}, defaultClaims);
+      delete claims.auth_time;
+
+      const jwtIdToken = idToken.createJwt(privatePem, claims);
+      const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
+
+      assert.isObject(idTokenPayload);
+      assert.equal(idTokenPayload.iss, 'http://example.com');
+    });
+
+    itThrowsErrorWhenClaimHasDecimalDigits('auth_time',
+      'claim "auth_time" optional (number of seconds from 1970-01-01T00:00:00Z in UTC)');
+
+    itThrowsErrorWhenClaimIsNotNumber('auth_time',
+      'claim "auth_time" optional (number of seconds from 1970-01-01T00:00:00Z in UTC)');
   });
 });
