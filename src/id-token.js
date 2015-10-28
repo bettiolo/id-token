@@ -15,7 +15,7 @@ const algHashMapping = {
   // 'ES512': 'SHA512',
 };
 
-function isRsaKey(pem) {
+function isPemRsaKey(pem) {
   return typeof (pem) === 'string'
     && pem.trimLeft().startsWith('-----BEGIN RSA PRIVATE KEY-----')
     && pem.trimRight().endsWith('-----END RSA PRIVATE KEY-----')
@@ -39,7 +39,6 @@ function isArrayOfStrings(array) {
     && array.every(isNonEmptyString);
 }
 
-
 export default {
   computeHash(alg, accessTokenOrCode) {
     assert.ok(!!algHashMapping[alg],
@@ -47,22 +46,27 @@ export default {
     assert.ok(isNonEmptyString(accessTokenOrCode),
       'Argument "accessTokenOrCode" required (string)');
 
+    // Implementation of Access Token hash (at_hash claim) or Code hash (c_hash claim)
+    // http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.3.2.11
     const hash = crypto.createHash(algHashMapping[alg]);
     hash.update(accessTokenOrCode);
     const digest = hash.digest();
     const base64Hash = digest.toString('base64', 0, digest.length / 2);
 
-    // Implementation of http://tools.ietf.org/html/rfc7515#appendix-C
+    // Implementation of base64url Encoding without Padding
+    // http://tools.ietf.org/html/rfc7515#appendix-C
     return base64Hash
       .split('=')[0] // Remove any trailing '='s
       .replace('+', '-') // 62nd char of encoding
       .replace('/', '_'); // 63rd char of encoding
   },
-  createJwt(privatePem, claims = {}, expiresIn) {
-    assert.ok(isRsaKey(privatePem),
+
+  createJwt(privatePem, claims = {}, expiresIn = null) {
+    assert.ok(isPemRsaKey(privatePem),
       'argument "privatePem" must be a RSA Private Key (PEM)');
 
-    // Implementation of http://openid.net/specs/openid-connect-core-1_0.html#IDToken
+    // Implementation of ID Token claims
+    // http://openid.net/specs/openid-connect-core-1_0.html#IDToken
     assert.ok(isNonEmptyString(claims.iss) && !!claims.iss.trim(),
       'claim "iis" required (string)');
     assert.ok(isNonEmptyString(claims.sub) && claims.sub.length <= 255,
