@@ -63,11 +63,17 @@ function computeHash(alg, accessTokenOrCode) {
 export default {
   _computeHash: computeHash,
 
-  createJwt(privatePem, claims = {}, { expiresIn, accessToken } = {}) {
+  createJwt(privatePem, claims = {},
+    { expiresIn, accessToken, authorizationCode } = {}) {
+    // Required parameters
     assert.ok(isPemRsaKey(privatePem),
       'argument "privatePem" must be a RSA Private Key (PEM)');
+
+    // Options
     assert.ok(!accessToken || isNonEmptyString(accessToken),
       'option "accessToken" must be a string');
+    assert.ok(!authorizationCode || isNonEmptyString(authorizationCode),
+      'option "authorizationCode" must be a string');
 
     // Implementation of ID Token claims
     // http://openid.net/specs/openid-connect-core-1_0.html#IDToken
@@ -87,8 +93,12 @@ export default {
       'claim "nonce" optional (string)');
 
     const alg = 'RS256';
+
     if (accessToken) {
       claims.at_hash = computeHash(alg, accessToken);
+    }
+    if (authorizationCode) {
+      claims.c_hash = computeHash(alg, authorizationCode);
     }
 
     const options = {

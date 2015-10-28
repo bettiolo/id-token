@@ -30,6 +30,7 @@ describe(
       nonce: 'vr2MrVSjyfu0UbrOtjWG',
     }, {
       accessToken: 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y',
+      authorizationCode: 'Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk',
     });
     const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
 
@@ -145,7 +146,7 @@ describe(
     });
 
     // Additional claim: http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.3.2.11
-    it.skip(
+    it(
     'c_hash: Code hash value. Its value is the base64url encoding of the left-most half of the hash ' +
     'of the octets of the ASCII representation of the code value, where the hash algorithm used is ' +
     'the hash algorithm used in the alg Header Parameter of the ID Token\'s JOSE Header. For instance, ' +
@@ -154,7 +155,7 @@ describe(
     'from the Authorization Endpoint with a code, which is the case for the response_type values ' +
     'code id_token and code id_token token, this is REQUIRED; otherwise, its inclusion is ' +
     'OPTIONAL.', () => {
-      assert.fail();
+        assert.equal(idTokenPayload.c_hash, 'LDktKdoQak3Pk0cnXxCltA');
     });
   });
 });

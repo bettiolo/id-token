@@ -301,6 +301,9 @@ describe('idToken', () => {
     itThrowsErrorWhenOptionIsNotString('accessToken',
       'option "accessToken" must be a string');
 
+    itThrowsErrorWhenOptionIsNotString('authorizationCode',
+      'option "authorizationCode" must be a string');
+
     it('Creates a signed JWT ID Token with RSA Private Key (PEM)', () => {
       const jwtIdToken = idToken.createJwt(privatePem, defaultClaims);
       const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
@@ -324,6 +327,15 @@ describe('idToken', () => {
 
       assert.isObject(idTokenPayload);
       assert.equal(idTokenPayload.at_hash, '77QmUPtjPfzWtF2AnpK9RQ');
+    });
+
+    it('Creates a signed JWT ID Token with optional c_hash', () => {
+      const options = { authorizationCode: 'Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk' };
+      const jwtIdToken = idToken.createJwt(privatePem, defaultClaims, options);
+      const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
+
+      assert.isObject(idTokenPayload);
+      assert.equal(idTokenPayload.c_hash, 'LDktKdoQak3Pk0cnXxCltA');
     });
   });
 });
