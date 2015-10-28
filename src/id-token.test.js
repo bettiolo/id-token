@@ -242,19 +242,6 @@ describe('idToken', () => {
       itThrowsErrorWhenClaimIsNotNumber('exp',
         'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
 
-      it('Creates a signed JWT ID Token with RSA Private Key (PEM)', () => {
-        const jwtIdToken = idToken.createJwt(privatePem, defaultClaims);
-        const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {algorithms: ['RS256']});
-
-        assert.isObject(idTokenPayload);
-        assert.equal(idTokenPayload.iss, 'http://example.com');
-        assert.equal(idTokenPayload.sub, 'Abc123');
-        assert.equal(idTokenPayload.aud, 'xyZ123');
-        assert.ok(idTokenPayload.exp > nowEpoch);
-        assert.ok(idTokenPayload.iat >= nowEpoch);
-        assert.ok(idTokenPayload.iat < idTokenPayload.exp);
-      });
-
       it('Ignores missing claim "exp" if option "expiresIn" is provided', () => {
         const claims = Object.assign({}, defaultClaims);
         delete claims.exp;
@@ -273,6 +260,37 @@ describe('idToken', () => {
         assert.throw(() => idToken.createJwt(privatePem, defaultClaims, {expiresIn: '5m'}),
           'claim "exp" and parameter expiresIn are mutually exclusive');
       });
+    });
+
+    context('Auto-generated claim "iat"', () => {
+      itThrowsErrorWhenClaimHasDecimalDigits('iat',
+        'claim "iat" optional (number of seconds from 1970-01-01T00:00:00Z in UTC)');
+
+      itThrowsErrorWhenClaimIsNotNumber('iat',
+        'claim "iat" optional (number of seconds from 1970-01-01T00:00:00Z in UTC)');
+
+      it('Claim "iat" can be overriden', () => {
+        const claims = Object.assign({}, defaultClaims);
+        claims.iat = 1311280970;
+        const jwtIdToken = idToken.createJwt(privatePem, claims);
+        const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
+
+        assert.isObject(idTokenPayload);
+        assert.equal(idTokenPayload.iat, 1311280970);
+      });
+    });
+
+    it('Creates a signed JWT ID Token with RSA Private Key (PEM)', () => {
+      const jwtIdToken = idToken.createJwt(privatePem, defaultClaims);
+      const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {algorithms: ['RS256']});
+
+      assert.isObject(idTokenPayload);
+      assert.equal(idTokenPayload.iss, 'http://example.com');
+      assert.equal(idTokenPayload.sub, 'Abc123');
+      assert.equal(idTokenPayload.aud, 'xyZ123');
+      assert.ok(idTokenPayload.exp > nowEpoch);
+      assert.ok(idTokenPayload.iat >= nowEpoch);
+      assert.ok(idTokenPayload.iat < idTokenPayload.exp);
     });
 
     function itIgnoresMissingOptionalClaim(claim) {

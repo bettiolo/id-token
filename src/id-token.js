@@ -75,7 +75,7 @@ export default {
     assert.ok(!authorizationCode || isNonEmptyString(authorizationCode),
       'option "authorizationCode" must be a string');
 
-    // Implementation of ID Token claims
+    // Required ID Token claims
     // http://openid.net/specs/openid-connect-core-1_0.html#IDToken
     assert.ok(isNonEmptyString(claims.iss) && !!claims.iss.trim(),
       'claim "iis" required (string)');
@@ -87,6 +87,11 @@ export default {
       'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
     assert.ok(!(claims.exp && expiresIn),
       'claim "exp" and parameter expiresIn are mutually exclusive');
+
+    // Optional ID Token claims
+    // http://openid.net/specs/openid-connect-core-1_0.html#IDToken
+    assert.ok(!claims.iat || isPositiveInteger(claims.iat),
+      'claim "iat" optional (number of seconds from 1970-01-01T00:00:00Z in UTC)');
     assert.ok(!claims.auth_time || isPositiveInteger(claims.auth_time),
       'claim "auth_time" optional (number of seconds from 1970-01-01T00:00:00Z in UTC)');
     assert.ok(!claims.nonce || isNonEmptyString(claims.nonce),
@@ -104,6 +109,7 @@ export default {
     const options = {
       algorithm: alg,
       expiresIn,
+      noTimestamp: !!claims.iat,
     };
     return jwt.sign(claims, privatePem, options);
   },
