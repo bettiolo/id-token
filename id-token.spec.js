@@ -158,6 +158,42 @@ describe(
       assert.equal(idTokenPayload.c_hash, 'LDktKdoQak3Pk0cnXxCltA');
     });
   });
+
+  // Taken from "OpenID Connect Core 1.0 - draft 23 incorporating errata set 2"
+  // http://openid.bitbucket.org/openid-connect-core-1_0.html#code-id_token-tokenExample
+  // The Section A.6 has a bug in "OpenID Connect Core 1.0 incorporating errata set 1"
+  context(
+  'A.6.  Example using response_type=code id_token token', () => {
+    it('Generated ID Token matches the expected one', () => {
+      const jwtIdToken = idToken.createJwt(privatePem, {
+        iss: 'https://server.example.com',
+        sub: '248289761001',
+        aud: 's6BhdRkqt3',
+        nonce: 'n-0S6_WzA2Mj',
+        exp: 1311281970,
+        iat: 1311280970,
+      }, {
+        accessToken: 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y',
+        authorizationCode: 'Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk',
+      });
+
+      const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {
+        algorithms: ['RS256'],
+        ignoreExpiration: true,
+      });
+
+      assert.deepEqual(idTokenPayload, {
+        'iss': 'https://server.example.com',
+        'sub': '248289761001',
+        'aud': 's6BhdRkqt3',
+        'nonce': 'n-0S6_WzA2Mj',
+        'exp': 1311281970,
+        'iat': 1311280970,
+        'at_hash': '77QmUPtjPfzWtF2AnpK9RQ',
+        'c_hash': 'LDktKdoQak3Pk0cnXxCltA',
+      });
+    });
+  });
 });
 
 // TODO: Update the spec to use the wording of http://openid.net/specs/openid-connect-core-1_0.html
