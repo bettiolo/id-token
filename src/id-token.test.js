@@ -62,8 +62,6 @@ describe('idToken', () => {
       sub: 'Abc123',
       aud: 'xyZ123',
       exp: absoluteExpiryIn1Minute,
-      auth_time: nowEpoch,
-      nonce: 'vr2MrVSjyfu0UbrOtjWG',
     };
 
     function itThrowsErrorWhenRequiredClaimMissing(claim, expectedError) {
@@ -123,12 +121,6 @@ describe('idToken', () => {
         assert.ok(!idTokenPayload[claim]);
       });
     }
-
-    it('Creates a JWT Token', () => {
-      const jwtIdToken = idToken.createJwt(privatePem, defaultClaims);
-
-      assert.isString(jwtIdToken);
-    });
 
     it('Signs the token using RS256 algorithm', () => {
       const jwtIdToken = idToken.createJwt(privatePem, defaultClaims);
@@ -257,6 +249,19 @@ describe('idToken', () => {
     itThrowsErrorWhenClaimIsNotNumber('exp',
       'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
 
+    it('Creates a signed JWT ID Token with RSA Private Key (PEM)', () => {
+      const jwtIdToken = idToken.createJwt(privatePem, defaultClaims);
+      const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
+
+      assert.isObject(idTokenPayload);
+      assert.equal(idTokenPayload.iss, 'http://example.com');
+      assert.equal(idTokenPayload.sub, 'Abc123');
+      assert.equal(idTokenPayload.aud, 'xyZ123');
+      assert.ok(idTokenPayload.exp > nowEpoch);
+      assert.ok(idTokenPayload.iat >= nowEpoch);
+      assert.ok(idTokenPayload.iat < idTokenPayload.exp);
+    });
+
     it('Ignores missing claim "exp" if option "expiresIn" is provided', () => {
       const claims = Object.assign({}, defaultClaims);
       delete claims.exp;
@@ -284,10 +289,37 @@ describe('idToken', () => {
     itThrowsErrorWhenClaimIsNotNumber('auth_time',
       'claim "auth_time" optional (number of seconds from 1970-01-01T00:00:00Z in UTC)');
 
+    it('Creates a signed JWT ID Token with optional "auth_time" claim', () => {
+      const claims = Object.assign(defaultClaims, {
+        auth_time: nowEpoch,
+        nonce: 'vr2MrVSjyfu0UbrOtjWG',
+      });
+      const jwtIdToken = idToken.createJwt(privatePem, claims);
+      const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
+
+      assert.isObject(idTokenPayload);
+      assert.equal(idTokenPayload.iss, 'http://example.com');
+      assert.equal(idTokenPayload.auth_time, nowEpoch);
+      assert.equal(idTokenPayload.nonce, 'vr2MrVSjyfu0UbrOtjWG');
+    });
+
     itIgnoresMissingOptionalClaim('nonce');
 
     itThrowsErrorWhenClaimIsNotString('nonce',
       'claim "nonce" optional (string)');
+
+    it('Creates a signed JWT ID Token with optional "nonce" claim', () => {
+      const claims = Object.assign(defaultClaims, {
+        nonce: 'vr2MrVSjyfu0UbrOtjWG',
+      });
+      const jwtIdToken = idToken.createJwt(privatePem, claims);
+      const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
+
+      assert.isObject(idTokenPayload);
+      assert.equal(idTokenPayload.iss, 'http://example.com');
+      assert.equal(idTokenPayload.auth_time, nowEpoch);
+      assert.equal(idTokenPayload.nonce, 'vr2MrVSjyfu0UbrOtjWG');
+    });
 
     function itThrowsErrorWhenOptionIsNotString(option, expectedError) {
       it(`Throws error when option "${option}" not a string`, () => {
@@ -301,26 +333,7 @@ describe('idToken', () => {
     itThrowsErrorWhenOptionIsNotString('accessToken',
       'option "accessToken" must be a string');
 
-    itThrowsErrorWhenOptionIsNotString('authorizationCode',
-      'option "authorizationCode" must be a string');
-
-    it('Creates a signed JWT ID Token with RSA Private Key (PEM)', () => {
-      const jwtIdToken = idToken.createJwt(privatePem, defaultClaims);
-      const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
-
-      assert.isObject(idTokenPayload);
-      assert.equal(idTokenPayload.iss, 'http://example.com');
-      assert.equal(idTokenPayload.sub, 'Abc123');
-      assert.equal(idTokenPayload.aud, 'xyZ123');
-      assert.ok(idTokenPayload.exp > nowEpoch);
-      assert.ok(idTokenPayload.iat >= nowEpoch);
-      assert.ok(idTokenPayload.iat < idTokenPayload.exp);
-      assert.equal(idTokenPayload.auth_time, nowEpoch);
-      assert.equal(idTokenPayload.nonce, 'vr2MrVSjyfu0UbrOtjWG');
-      // TODO: Check all the claims
-    });
-
-    it('Creates a signed JWT ID Token with optional at_hash', () => {
+    it('Creates a signed JWT ID Token with "at_hash" option', () => {
       const options = { accessToken: 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y' };
       const jwtIdToken = idToken.createJwt(privatePem, defaultClaims, options);
       const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
@@ -329,7 +342,10 @@ describe('idToken', () => {
       assert.equal(idTokenPayload.at_hash, '77QmUPtjPfzWtF2AnpK9RQ');
     });
 
-    it('Creates a signed JWT ID Token with optional c_hash', () => {
+    itThrowsErrorWhenOptionIsNotString('authorizationCode',
+      'option "authorizationCode" must be a string');
+
+    it('Creates a signed JWT ID Token with "c_hash" option', () => {
       const options = { authorizationCode: 'Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk' };
       const jwtIdToken = idToken.createJwt(privatePem, defaultClaims, options);
       const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
