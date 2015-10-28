@@ -39,31 +39,35 @@ function isArrayOfStrings(array) {
     && array.every(isNonEmptyString);
 }
 
+function computeHash(alg, accessTokenOrCode) {
+  assert.ok(!!algHashMapping[alg],
+    'Invalid algorithm');
+  assert.ok(isNonEmptyString(accessTokenOrCode),
+    'Argument "accessTokenOrCode" required (string)');
+
+  // Implementation of Access Token hash (at_hash claim) or Code hash (c_hash claim)
+  // http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.3.2.11
+  const hash = crypto.createHash(algHashMapping[alg]);
+  hash.update(accessTokenOrCode);
+  const digest = hash.digest();
+  const base64Hash = digest.toString('base64', 0, digest.length / 2);
+
+  // Implementation of base64url Encoding without Padding
+  // http://tools.ietf.org/html/rfc7515#appendix-C
+  return base64Hash
+    .split('=')[0] // Remove any trailing '='s
+    .replace('+', '-') // 62nd char of encoding
+    .replace('/', '_'); // 63rd char of encoding
+}
+
 export default {
-  computeHash(alg, accessTokenOrCode) {
-    assert.ok(!!algHashMapping[alg],
-      'Invalid algorithm');
-    assert.ok(isNonEmptyString(accessTokenOrCode),
-      'Argument "accessTokenOrCode" required (string)');
+  _computeHash: computeHash,
 
-    // Implementation of Access Token hash (at_hash claim) or Code hash (c_hash claim)
-    // http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.3.2.11
-    const hash = crypto.createHash(algHashMapping[alg]);
-    hash.update(accessTokenOrCode);
-    const digest = hash.digest();
-    const base64Hash = digest.toString('base64', 0, digest.length / 2);
-
-    // Implementation of base64url Encoding without Padding
-    // http://tools.ietf.org/html/rfc7515#appendix-C
-    return base64Hash
-      .split('=')[0] // Remove any trailing '='s
-      .replace('+', '-') // 62nd char of encoding
-      .replace('/', '_'); // 63rd char of encoding
-  },
-
-  createJwt(privatePem, claims = {}, expiresIn = null) {
+  createJwt(privatePem, claims = {}, { expiresIn, accessToken } = {}) {
     assert.ok(isPemRsaKey(privatePem),
       'argument "privatePem" must be a RSA Private Key (PEM)');
+    assert.ok(!accessToken || isNonEmptyString(accessToken),
+      'option "accessToken" must be a string');
 
     // Implementation of ID Token claims
     // http://openid.net/specs/openid-connect-core-1_0.html#IDToken
@@ -82,11 +86,15 @@ export default {
     assert.ok(!claims.nonce || isNonEmptyString(claims.nonce),
       'claim "nonce" optional (string)');
 
+    const alg = 'RS256';
+    if (accessToken) {
+      claims.at_hash = computeHash(alg, accessToken);
+    }
+
     const options = {
-      algorithm: 'RS256',
+      algorithm: alg,
       expiresIn,
     };
-
     return jwt.sign(claims, privatePem, options);
   },
 };

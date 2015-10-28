@@ -15,14 +15,14 @@ const wrongPublicPem = getPem(wrongPublicJwk.n, wrongPublicJwk.e);
 describe('idToken', () => {
   it(`Has expected methods`, () => {
     assert.isFunction(idToken.createJwt);
-    assert.isFunction(idToken.computeHash);
+    assert.isFunction(idToken._computeHash);
   });
 
-  context(`${idToken.computeHash.name}()`, () => {
+  context(`${idToken._computeHash.name}()`, () => {
     it('Computes sha256 access token hash (at_hash) for algorithm RS256', () => {
       // Based on: http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.A.3
       const accessToken = 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y';
-      const atHash = idToken.computeHash('RS256', accessToken);
+      const atHash = idToken._computeHash('RS256', accessToken);
 
       assert.equal(atHash, '77QmUPtjPfzWtF2AnpK9RQ');
     });
@@ -30,7 +30,7 @@ describe('idToken', () => {
     it('Computes sha256 code hash (c_hash) for algorithm RS256', () => {
       // Based on: http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.A.4
       const code = 'Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk';
-      const cHash = idToken.computeHash('RS256', code);
+      const cHash = idToken._computeHash('RS256', code);
 
       assert.equal(cHash, 'LDktKdoQak3Pk0cnXxCltA');
     });
@@ -38,17 +38,17 @@ describe('idToken', () => {
     it('Throws an error if algorithm unknown', () => {
       const invalidAlgorithm = 'AB123';
 
-      assert.throw(() => idToken.computeHash(invalidAlgorithm, 'any-access-token-or-code'),
+      assert.throw(() => idToken._computeHash(invalidAlgorithm, 'any-access-token-or-code'),
         'Invalid algorithm');
     });
 
     it('Throws an error if access token or code missing', () => {
-      assert.throw(() => idToken.computeHash('HS512'),
+      assert.throw(() => idToken._computeHash('HS512'),
         'Argument "accessTokenOrCode" required (string)');
     });
 
     it('Throws an error if access token or code not a string', () => {
-      assert.throw(() => idToken.computeHash('HS512', 12345),
+      assert.throw(() => idToken._computeHash('HS512', 12345),
         'Argument "accessTokenOrCode" required (string)');
     });
   });
@@ -135,22 +135,6 @@ describe('idToken', () => {
       const decodedIdToken = jwt.decode(jwtIdToken, { complete: true });
 
       assert.equal(decodedIdToken.header.alg, 'RS256');
-    });
-
-    it('Creates a signed JWT ID Token with RSA Private Key (PEM)', () => {
-      const jwtIdToken = idToken.createJwt(privatePem, defaultClaims);
-      const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
-
-      assert.isObject(idTokenPayload);
-      assert.equal(idTokenPayload.iss, 'http://example.com');
-      assert.equal(idTokenPayload.sub, 'Abc123');
-      assert.equal(idTokenPayload.aud, 'xyZ123');
-      assert.ok(idTokenPayload.exp > nowEpoch);
-      assert.ok(idTokenPayload.iat >= nowEpoch);
-      assert.ok(idTokenPayload.iat < idTokenPayload.exp);
-      assert.equal(idTokenPayload.auth_time, nowEpoch);
-      assert.equal(idTokenPayload.nonce, 'vr2MrVSjyfu0UbrOtjWG');
-      // TODO: Check all the claims
     });
 
     it('Does not validate JWT ID Token with wrong RSA Public Key (PEM)', (done) => {
@@ -273,13 +257,12 @@ describe('idToken', () => {
     itThrowsErrorWhenClaimIsNotNumber('exp',
       'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
 
-    it('Ignores missing claim "exp" if optional parameter "expiresIn" is provided', () => {
+    it('Ignores missing claim "exp" if option "expiresIn" is provided', () => {
       const claims = Object.assign({}, defaultClaims);
       delete claims.exp;
-      const expiresIn5minutes = '5m'; // expressed in seconds or an string describing a time span rauchg/ms
       const nowIn5MinutesEpoch = Math.floor(Date.now() / 1000) + (5 * 60) + 1;
 
-      const jwtIdToken = idToken.createJwt(privatePem, claims, expiresIn5minutes);
+      const jwtIdToken = idToken.createJwt(privatePem, claims, { expiresIn: '5m' });
       const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
 
       assert.isObject(idTokenPayload);
@@ -289,9 +272,7 @@ describe('idToken', () => {
     });
 
     it('Throws error because claim "exp" and parameter "expiresIn" are mutually exclusive', () => {
-      const expiresIn5minutes = '5m'; // expressed in seconds or an string describing a time span rauchg/ms
-
-      assert.throw(() => idToken.createJwt(privatePem, defaultClaims, expiresIn5minutes),
+      assert.throw(() => idToken.createJwt(privatePem, defaultClaims, { expiresIn: '5m' }),
         'claim "exp" and parameter expiresIn are mutually exclusive');
     });
 
@@ -307,5 +288,42 @@ describe('idToken', () => {
 
     itThrowsErrorWhenClaimIsNotString('nonce',
       'claim "nonce" optional (string)');
+
+    function itThrowsErrorWhenOptionIsNotString(option, expectedError) {
+      it(`Throws error when option "${option}" not a string`, () => {
+        const options = {};
+        options[option] = 12345;
+
+        assert.throw(() => idToken.createJwt(privatePem, defaultClaims, options), expectedError);
+      });
+    }
+
+    itThrowsErrorWhenOptionIsNotString('accessToken',
+      'option "accessToken" must be a string');
+
+    it('Creates a signed JWT ID Token with RSA Private Key (PEM)', () => {
+      const jwtIdToken = idToken.createJwt(privatePem, defaultClaims);
+      const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
+
+      assert.isObject(idTokenPayload);
+      assert.equal(idTokenPayload.iss, 'http://example.com');
+      assert.equal(idTokenPayload.sub, 'Abc123');
+      assert.equal(idTokenPayload.aud, 'xyZ123');
+      assert.ok(idTokenPayload.exp > nowEpoch);
+      assert.ok(idTokenPayload.iat >= nowEpoch);
+      assert.ok(idTokenPayload.iat < idTokenPayload.exp);
+      assert.equal(idTokenPayload.auth_time, nowEpoch);
+      assert.equal(idTokenPayload.nonce, 'vr2MrVSjyfu0UbrOtjWG');
+      // TODO: Check all the claims
+    });
+
+    it('Creates a signed JWT ID Token with optional at_hash', () => {
+      const options = { accessToken: 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y' };
+      const jwtIdToken = idToken.createJwt(privatePem, defaultClaims, options);
+      const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
+
+      assert.isObject(idTokenPayload);
+      assert.equal(idTokenPayload.at_hash, '77QmUPtjPfzWtF2AnpK9RQ');
+    });
   });
 });

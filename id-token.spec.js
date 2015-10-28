@@ -28,6 +28,8 @@ describe(
       exp: absoluteExpiryIn1Minute,
       auth_time: nowEpoch,
       nonce: 'vr2MrVSjyfu0UbrOtjWG',
+    }, {
+      accessToken: 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y',
     });
     const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
 
@@ -130,7 +132,7 @@ describe(
     });
 
     // Additional claim: http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.3.2.11
-    it.skip(
+    it(
     'at_hash: Access Token hash value. Its value is the base64url encoding of the left-most half of ' +
     'the hash of the octets of the ASCII representation of the access_token value, where the hash ' +
     'algorithm used is the hash algorithm used in the alg Header Parameter of the ID Token\'s JOSE ' +
@@ -139,7 +141,7 @@ describe(
     'If the ID Token is issued from the Authorization Endpoint with an access_token value, which is ' +
     'the case for the response_type value code id_token token, this is REQUIRED; otherwise, its ' +
     'inclusion is OPTIONAL.', () => {
-      assert.fail();
+      assert.equal(idTokenPayload.at_hash, '77QmUPtjPfzWtF2AnpK9RQ');
     });
 
     // Additional claim: http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.3.2.11
