@@ -155,7 +155,7 @@ describe(
     'from the Authorization Endpoint with a code, which is the case for the response_type values ' +
     'code id_token and code id_token token, this is REQUIRED; otherwise, its inclusion is ' +
     'OPTIONAL.', () => {
-        assert.equal(idTokenPayload.c_hash, 'LDktKdoQak3Pk0cnXxCltA');
+      assert.equal(idTokenPayload.c_hash, 'LDktKdoQak3Pk0cnXxCltA');
     });
   });
 });
