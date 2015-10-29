@@ -64,7 +64,7 @@ export default {
   _computeHash: computeHash,
 
   createJwt(privatePem, claims = {},
-    { expiresIn, accessToken, authorizationCode } = {}) {
+    { expiresIn, accessToken, authorizationCode, kid } = {}) {
     // Required parameters
     assert.ok(isPemRsaKey(privatePem),
       'argument "privatePem" must be a RSA Private Key (PEM)');
@@ -74,6 +74,8 @@ export default {
       'option "accessToken" must be a string');
     assert.ok(!authorizationCode || isNonEmptyString(authorizationCode),
       'option "authorizationCode" must be a string');
+    assert.ok(!kid || isNonEmptyString(kid),
+      'option "kid" must be a string');
 
     // Required ID Token claims
     // http://openid.net/specs/openid-connect-core-1_0.html#IDToken
@@ -110,6 +112,7 @@ export default {
       algorithm: alg,
       expiresIn,
       noTimestamp: !!claims.iat,
+      headers: { kid },
     };
     return jwt.sign(claims, privatePem, options);
   },

@@ -386,5 +386,18 @@ describe('idToken', () => {
         assert.equal(idTokenPayload.c_hash, 'LDktKdoQak3Pk0cnXxCltA');
       });
     });
+
+    context('Optional header parameter "kid', () => {
+      itThrowsErrorWhenOptionIsNotString('kid',
+        'option "kid" must be a string');
+
+      it('Creates a JWT ID Token with the "kid" header parameter', () => {
+        const options = { kid: '12345abc' };
+        const jwtIdToken = idToken.createJwt(privatePem, defaultClaims, options);
+        const decodedIdToken = jwt.decode(jwtIdToken, { complete: true });
+
+        assert.equal(decodedIdToken.header.kid, '12345abc');
+      });
+    });
   });
 });

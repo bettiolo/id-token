@@ -31,8 +31,10 @@ describe(
     }, {
       accessToken: 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y',
       authorizationCode: 'Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk',
+      kid: '1e9gdk7',
     });
     const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
+    const idTokenHeader = jwt.decode(jwtIdToken, { complete: true }).header;
 
     it(
     'iss: REQUIRED. Issuer Identifier for the Issuer of the response. The iss value is a ' +
@@ -132,7 +134,7 @@ describe(
       assert.fail();
     });
 
-    // Additional claim: http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.3.2.11
+    // Optional claim: http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.3.2.11
     it(
     'at_hash: Access Token hash value. Its value is the base64url encoding of the left-most half of ' +
     'the hash of the octets of the ASCII representation of the access_token value, where the hash ' +
@@ -145,7 +147,7 @@ describe(
       assert.equal(idTokenPayload.at_hash, '77QmUPtjPfzWtF2AnpK9RQ');
     });
 
-    // Additional claim: http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.3.2.11
+    // Optional claim: http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.3.2.11
     it(
     'c_hash: Code hash value. Its value is the base64url encoding of the left-most half of the hash ' +
     'of the octets of the ASCII representation of the code value, where the hash algorithm used is ' +
@@ -156,6 +158,16 @@ describe(
     'code id_token and code id_token token, this is REQUIRED; otherwise, its inclusion is ' +
     'OPTIONAL.', () => {
       assert.equal(idTokenPayload.c_hash, 'LDktKdoQak3Pk0cnXxCltA');
+    });
+
+    // Optional header parameter: https://tools.ietf.org/html/rfc7515#section-4.1.4
+    it(
+    'kid: (Key ID) Header Parameter. The "kid" (key ID) Header Parameter is a hint indicating which ' +
+    'key was used to secure the JWS.  This parameter allows originators to explicitly signal a ' +
+    'change of key to recipients.  The structure of the "kid" value is unspecified.  Its value ' +
+    'MUST be a case-sensitive string.  Use of this Header Parameter is OPTIONAL. When used with a JWK, ' +
+    'the "kid" value is used to match a JWK "kid" parameter value.', () => {
+      assert.equal(idTokenHeader.kid, '1e9gdk7');
     });
   });
 
@@ -175,12 +187,17 @@ describe(
       }, {
         accessToken: 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y',
         authorizationCode: 'Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk',
+        kid: '1e9gdk7',
       });
 
       const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {
         algorithms: ['RS256'],
         ignoreExpiration: true,
       });
+      const idTokenHeader = jwt.decode(jwtIdToken, { complete: true }).header;
+
+      assert.equal(idTokenHeader.alg, 'RS256');
+      assert.equal(idTokenHeader.kid, '1e9gdk7');
 
       assert.deepEqual(idTokenPayload, {
         'iss': 'https://server.example.com',
