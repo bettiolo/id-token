@@ -1,6 +1,6 @@
 {
   "name": "id-token",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "OpenID Connect ID Token",
   "author": "Marco Bettiolo <marco@bettiolo.it>",
   "repository": "bettiolo/id-token",
