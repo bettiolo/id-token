@@ -399,5 +399,13 @@ describe('idToken', () => {
         assert.equal(decodedIdToken.header.kid, '12345abc');
       });
     });
+
+    context('Other claims', () => {
+      it.skip('Other claims are ignored');
+    });
+
+    context('Other header parameter', () => {
+      it.skip('Other header parameters are ignored');
+    });
   });
 });
