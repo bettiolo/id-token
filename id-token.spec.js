@@ -28,6 +28,7 @@ describe(
       exp: absoluteExpiryIn1Minute,
       auth_time: nowEpoch,
       nonce: 'vr2MrVSjyfu0UbrOtjWG',
+      other_claim: 'other_claim',
     }, {
       accessToken: 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y',
       authorizationCode: 'Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk',
@@ -122,9 +123,9 @@ describe(
       assert.fail();
     });
 
-    it.skip(
+    it(
     'ID Tokens MAY contain other Claims. Any Claims used that are not understood MUST be ignored.', () => {
-      assert.fail();
+      assert.equal(idTokenPayload.other_claim, 'other_claim');
     });
 
     it.skip(
