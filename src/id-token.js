@@ -15,6 +15,8 @@ const algHashMapping = {
   // 'ES512': 'SHA512',
 };
 
+// TODO: We may need to implement more additional valid options:
+// http://stackoverflow.com/a/20065554/26754
 function isPemRsaKey(pem) {
   return typeof (pem) === 'string'
     && pem.trimLeft().startsWith('-----BEGIN RSA PRIVATE KEY-----')
