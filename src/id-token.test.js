@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { assert } from 'chai';
 import jwt from 'jsonwebtoken';
-import idToken from './id-token';
+import idTokenWithoutDefaults from './id-token';
 import getPem from 'rsa-pem-from-mod-exp';
 import publicJwk from './test-data/test1-jwk.json';
 import wrongPublicJwk from './test-data/test2-jwk.json';
@@ -13,12 +13,14 @@ const publicPem = getPem(publicJwk.n, publicJwk.e);
 const wrongPublicPem = getPem(wrongPublicJwk.n, wrongPublicJwk.e);
 
 describe('idToken', () => {
+  const idToken = idTokenWithoutDefaults.withDefaults();
+
   it(`Has expected methods`, () => {
+    assert.isFunction(idTokenWithoutDefaults._computeHash);
     assert.isFunction(idToken.createJwt);
-    assert.isFunction(idToken._computeHash);
   });
 
-  context(`${idToken._computeHash.name}()`, () => {
+  context(`${idTokenWithoutDefaults._computeHash.name}()`, () => {
     it('Computes sha256 access token hash (at_hash) for algorithm RS256', () => {
       // Based on: http://openid.net/specs/openid-connect-core-1_0.html#rfc.section.A.3
       const accessToken = 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y';
@@ -64,14 +66,14 @@ describe('idToken', () => {
     };
 
     it('Signs the token using RS256 algorithm', () => {
-      const jwtIdToken = idToken.createJwt(privatePem, defaultClaims);
+      const jwtIdToken = idToken.createJwt({privatePem, claims: defaultClaims});
       const decodedIdToken = jwt.decode(jwtIdToken, { complete: true });
 
       assert.equal(decodedIdToken.header.alg, 'RS256');
     });
 
     it('Does not validate JWT ID Token with wrong RSA Public Key (PEM)', (done) => {
-      const jwtIdToken = idToken.createJwt(privatePem, defaultClaims);
+      const jwtIdToken = idToken.createJwt({privatePem, claims: defaultClaims});
       jwt.verify(jwtIdToken, wrongPublicPem, defaultClaims, (err, idTokenPayload) => {
         assert.isUndefined(idTokenPayload);
         assert.equal(err.message, 'invalid signature');
@@ -84,7 +86,7 @@ describe('idToken', () => {
         '-----BEGIN RSA PRIVATE KEY-----' +
         '-----END RSA PRIVATE KEY-----';
       assert.throw(() =>
-        idToken.createJwt(invalidPem, defaultClaims),
+        idToken.createJwt({invalidPem, claims: defaultClaims}),
         'argument "privatePem" must be a RSA Private Key (PEM)');
     });
 
@@ -93,7 +95,7 @@ describe('idToken', () => {
         const invalidClaims = Object.assign({}, defaultClaims);
         delete invalidClaims[claim];
 
-        assert.throw(() => idToken.createJwt(privatePem, invalidClaims), expectedError);
+        assert.throw(() => idToken.createJwt({privatePem, claims: invalidClaims}), expectedError);
       });
     }
 
@@ -102,7 +104,7 @@ describe('idToken', () => {
         const invalidClaims = Object.assign({}, defaultClaims);
         invalidClaims[claim] = 12345;
 
-        assert.throw(() => idToken.createJwt(privatePem, invalidClaims), expectedError);
+        assert.throw(() => idToken.createJwt({privatePem, claims: invalidClaims}), expectedError);
       });
     }
 
@@ -111,7 +113,7 @@ describe('idToken', () => {
         const invalidClaims = Object.assign({}, defaultClaims);
         invalidClaims[claim] = '';
 
-        assert.throw(() => idToken.createJwt(privatePem, invalidClaims), expectedError);
+        assert.throw(() => idToken.createJwt({privatePem, claims: invalidClaims}), expectedError);
       });
     }
 
@@ -126,10 +128,10 @@ describe('idToken', () => {
         'claim "iis" required (string)');
 
       it('Throws error when claim "iss" is invalid', () => {
-        const invlidClaims = Object.assign({}, defaultClaims);
-        invlidClaims.iss = '   ';
+        const invalidClaims = Object.assign({}, defaultClaims);
+        invalidClaims.iss = '   ';
 
-        assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        assert.throw(() => idToken.createJwt({privatePem, claims: invalidClaims}),
           'claim "iis" required (string)');
       });
 
@@ -153,10 +155,10 @@ describe('idToken', () => {
         'claim "sub" required (string, max 255 ASCII characters)');
 
       it('Throws error when claim "sub" exceeds 255 ASCII characters', () => {
-        const invlidClaims = Object.assign({}, defaultClaims);
-        invlidClaims.sub = new Array(256 + 1).join('X');
+        const invalidClaims = Object.assign({}, defaultClaims);
+        invalidClaims.sub = new Array(256 + 1).join('X');
 
-        assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        assert.throw(() => idToken.createJwt({privatePem, claims: invalidClaims}),
           'claim "sub" required (string, max 255 ASCII characters)');
       });
     });
@@ -175,52 +177,52 @@ describe('idToken', () => {
         const claims = Object.assign({}, defaultClaims);
         claims.aud = ['Foo1', 'bar2'];
 
-        const jwtIdToken = idToken.createJwt(privatePem, claims);
+        const jwtIdToken = idToken.createJwt({privatePem, claims});
         const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {algorithms: ['RS256']});
 
         assert.deepEqual(idTokenPayload.aud, ['Foo1', 'bar2']);
       });
 
       it('Throws error when required claim "aud" is an array with no elements', () => {
-        const invlidClaims = Object.assign({}, defaultClaims);
-        invlidClaims.aud = [];
+        const invalidClaims = Object.assign({}, defaultClaims);
+        invalidClaims.aud = [];
 
-        assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        assert.throw(() => idToken.createJwt({privatePem, claims: invalidClaims}),
           'claim "aud" required (string OR array of strings)');
       });
 
       it('Throws error when required claim "aud" is an array of empty strings', () => {
-        const invlidClaims = Object.assign({}, defaultClaims);
-        invlidClaims.aud = [''];
+        const invalidClaims = Object.assign({}, defaultClaims);
+        invalidClaims.aud = [''];
 
-        assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        assert.throw(() => idToken.createJwt({privatePem, claims: invalidClaims}),
           'claim "aud" required (string OR array of strings)');
       });
 
       it('Throws error when claim "aud" not an array of strings', () => {
-        const invlidClaims = Object.assign({}, defaultClaims);
-        invlidClaims.aud = [ 12345 ];
+        const invalidClaims = Object.assign({}, defaultClaims);
+        invalidClaims.aud = [ 12345 ];
 
-        assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        assert.throw(() => idToken.createJwt({privatePem, claims: invalidClaims}),
           'claim "aud" required (string OR array of strings)');
       });
     });
 
     function itThrowsErrorWhenClaimHasDecimalDigits(claim, expectedError) {
       it(`Throws error when claim "${claim}" has decimal digits`, () => {
-        const invlidClaims = Object.assign({}, defaultClaims);
-        invlidClaims[claim] = 12345.67;
+        const invalidClaims = Object.assign({}, defaultClaims);
+        invalidClaims[claim] = 12345.67;
 
-        assert.throw(() => idToken.createJwt(privatePem, invlidClaims), expectedError);
+        assert.throw(() => idToken.createJwt({privatePem, claims: invalidClaims}), expectedError);
       });
     }
 
     function itThrowsErrorWhenClaimIsNotNumber(claim, expectedError) {
       it(`Throws error when claim "${claim}" is not a number`, () => {
-        const invlidClaims = Object.assign({}, defaultClaims);
-        invlidClaims[claim] = 'abc';
+        const invalidClaims = Object.assign({}, defaultClaims);
+        invalidClaims[claim] = 'abc';
 
-        assert.throw(() => idToken.createJwt(privatePem, invlidClaims), expectedError);
+        assert.throw(() => idToken.createJwt({privatePem, claims: invalidClaims}), expectedError);
       });
     }
 
@@ -229,10 +231,10 @@ describe('idToken', () => {
         'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
 
       it('Throws error when required claim "exp" is zero', () => {
-        const invlidClaims = Object.assign({}, defaultClaims);
-        invlidClaims.exp = 0;
+        const invalidClaims = Object.assign({}, defaultClaims);
+        invalidClaims.exp = 0;
 
-        assert.throw(() => idToken.createJwt(privatePem, invlidClaims),
+        assert.throw(() => idToken.createJwt({privatePem, claims: invalidClaims}),
           'claim "exp" required (number of seconds from 1970-01-01T00:00:00Z in UTC)');
       });
 
@@ -247,7 +249,7 @@ describe('idToken', () => {
         delete claims.exp;
         const nowIn5MinutesEpoch = Math.floor(Date.now() / 1000) + (5 * 60) + 1;
 
-        const jwtIdToken = idToken.createJwt(privatePem, claims, {expiresIn: '5m'});
+        const jwtIdToken = idToken.createJwt({privatePem, claims, options: {expiresIn: '5m'}});
         const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {algorithms: ['RS256']});
 
         assert.isObject(idTokenPayload);
@@ -257,7 +259,7 @@ describe('idToken', () => {
       });
 
       it('Throws error because claim "exp" and parameter "expiresIn" are mutually exclusive', () => {
-        assert.throw(() => idToken.createJwt(privatePem, defaultClaims, {expiresIn: '5m'}),
+        assert.throw(() => idToken.createJwt({privatePem, claims: defaultClaims, options: {expiresIn: '5m'}}),
           'claim "exp" and parameter expiresIn are mutually exclusive');
       });
     });
@@ -272,7 +274,7 @@ describe('idToken', () => {
       it('Claim "iat" can be overriden', () => {
         const claims = Object.assign({}, defaultClaims);
         claims.iat = 1311280970;
-        const jwtIdToken = idToken.createJwt(privatePem, claims);
+        const jwtIdToken = idToken.createJwt({privatePem, claims});
         const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
 
         assert.isObject(idTokenPayload);
@@ -281,7 +283,7 @@ describe('idToken', () => {
     });
 
     it('Creates a signed JWT ID Token with RSA Private Key (PEM)', () => {
-      const jwtIdToken = idToken.createJwt(privatePem, defaultClaims);
+      const jwtIdToken = idToken.createJwt({privatePem, claims: defaultClaims});
       const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {algorithms: ['RS256']});
 
       assert.isObject(idTokenPayload);
@@ -298,7 +300,7 @@ describe('idToken', () => {
         const claims = Object.assign({}, defaultClaims);
         delete claims[claim];
 
-        const jwtIdToken = idToken.createJwt(privatePem, claims);
+        const jwtIdToken = idToken.createJwt({privatePem, claims});
         const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
 
         assert.isObject(idTokenPayload);
@@ -320,7 +322,7 @@ describe('idToken', () => {
           auth_time: nowEpoch,
           nonce: 'vr2MrVSjyfu0UbrOtjWG',
         });
-        const jwtIdToken = idToken.createJwt(privatePem, claims);
+        const jwtIdToken = idToken.createJwt({privatePem, claims});
         const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {algorithms: ['RS256']});
 
         assert.isObject(idTokenPayload);
@@ -340,7 +342,7 @@ describe('idToken', () => {
         const claims = Object.assign(defaultClaims, {
           nonce: 'vr2MrVSjyfu0UbrOtjWG',
         });
-        const jwtIdToken = idToken.createJwt(privatePem, claims);
+        const jwtIdToken = idToken.createJwt({privatePem, claims});
         const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {algorithms: ['RS256']});
 
         assert.isObject(idTokenPayload);
@@ -355,7 +357,7 @@ describe('idToken', () => {
         const options = {};
         options[option] = 12345;
 
-        assert.throw(() => idToken.createJwt(privatePem, defaultClaims, options), expectedError);
+        assert.throw(() => idToken.createJwt({privatePem, claims: defaultClaims, options}), expectedError);
       });
     }
 
@@ -365,7 +367,7 @@ describe('idToken', () => {
 
       it('Creates a signed JWT ID Token with "at_hash" option', () => {
         const options = {accessToken: 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y'};
-        const jwtIdToken = idToken.createJwt(privatePem, defaultClaims, options);
+        const jwtIdToken = idToken.createJwt({privatePem, claims: defaultClaims, options});
         const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {algorithms: ['RS256']});
 
         assert.isObject(idTokenPayload);
@@ -379,7 +381,7 @@ describe('idToken', () => {
 
       it('Creates a signed JWT ID Token with "c_hash" option', () => {
         const options = {authorizationCode: 'Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk'};
-        const jwtIdToken = idToken.createJwt(privatePem, defaultClaims, options);
+        const jwtIdToken = idToken.createJwt({privatePem, claims: defaultClaims, options});
         const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {algorithms: ['RS256']});
 
         assert.isObject(idTokenPayload);
@@ -393,7 +395,7 @@ describe('idToken', () => {
 
       it('Creates a JWT ID Token with the "kid" header parameter', () => {
         const options = { kid: '12345abc' };
-        const jwtIdToken = idToken.createJwt(privatePem, defaultClaims, options);
+        const jwtIdToken = idToken.createJwt({privatePem, claims: defaultClaims, options});
         const decodedIdToken = jwt.decode(jwtIdToken, { complete: true });
 
         assert.equal(decodedIdToken.header.kid, '12345abc');

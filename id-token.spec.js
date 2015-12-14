@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { assert } from 'chai';
 import jwt from 'jsonwebtoken';
-import idToken from './index';
+import idTokenWithoutDefaults from './index';
 import getPem from 'rsa-pem-from-mod-exp';
 import publicJwk from './src/test-data/test1-jwk.json';
 
@@ -17,11 +17,12 @@ describe(
 'The ID Token is a security token that contains Claims about the authentication of ' +
 'an End-User by an Authorization Server when using a Client, and potentially other requested ' +
 'Claims. The ID Token is represented as a JSON Web Token (JWT) [JWT].', () => {
+  const idToken = idTokenWithoutDefaults.withDefaults();
   context(
   'The following Claims are used within the ID Token:', () => {
     const nowEpoch = Math.floor(Date.now() / 1000);
     const absoluteExpiryIn1Minute = nowEpoch + 60;
-    const jwtIdToken = idToken.createJwt(privatePem, {
+    const claims = {
       iss: 'https://server.example.com',
       sub: '24400320',
       aud: 's6BhdRkqt3',
@@ -29,11 +30,13 @@ describe(
       auth_time: nowEpoch,
       nonce: 'vr2MrVSjyfu0UbrOtjWG',
       other_claim: 'other_claim',
-    }, {
+    };
+    const options = {
       accessToken: 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y',
       authorizationCode: 'Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk',
       kid: '1e9gdk7',
-    });
+    };
+    const jwtIdToken = idToken.createJwt({privatePem, claims, options});
     const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
     const idTokenHeader = jwt.decode(jwtIdToken, { complete: true }).header;
 
@@ -178,18 +181,20 @@ describe(
   context(
   'A.6.  Example using response_type=code id_token token', () => {
     it('Generated ID Token matches the expected one', () => {
-      const jwtIdToken = idToken.createJwt(privatePem, {
+      const claims = {
         iss: 'https://server.example.com',
         sub: '248289761001',
         aud: 's6BhdRkqt3',
         nonce: 'n-0S6_WzA2Mj',
         exp: 1311281970,
         iat: 1311280970,
-      }, {
+      };
+      const options = {
         accessToken: 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y',
         authorizationCode: 'Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk',
         kid: '1e9gdk7',
-      });
+      };
+      const jwtIdToken = idToken.createJwt({privatePem, claims, options});
 
       const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {
         algorithms: ['RS256'],
