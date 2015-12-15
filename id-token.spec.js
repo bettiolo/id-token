@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import {assert} from 'chai';
 import jwt from 'jsonwebtoken';
-import idTokenWithoutDefaults from './dist/id-token.js';
+import idToken from './dist/id-token.js';
 import getPem from 'rsa-pem-from-mod-exp';
 import publicJwk from './src/test-data/test1-jwk.json';
 
@@ -17,7 +17,6 @@ describe(
 'The ID Token is a security token that contains Claims about the authentication of ' +
 'an End-User by an Authorization Server when using a Client, and potentially other requested ' +
 'Claims. The ID Token is represented as a JSON Web Token (JWT) [JWT].', () => {
-  const idToken = idTokenWithoutDefaults.withDefaults();
   context(
   'The following Claims are used within the ID Token:', () => {
     const nowEpoch = Math.floor(Date.now() / 1000);
