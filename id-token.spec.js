@@ -32,11 +32,12 @@ describe(
       other_claim: 'other_claim',
     };
     const options = {
+      privatePem,
       accessToken: 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y',
       authorizationCode: 'Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk',
       kid: '1e9gdk7',
     };
-    const jwtIdToken = idToken.createJwt({privatePem, claims, options});
+    const jwtIdToken = idToken.createJwt({claims, options});
     const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {algorithms: ['RS256']});
     const idTokenHeader = jwt.decode(jwtIdToken, {complete: true}).header;
 
@@ -190,11 +191,12 @@ describe(
         iat: 1311280970,
       };
       const options = {
+        privatePem,
         accessToken: 'jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y',
         authorizationCode: 'Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk',
         kid: '1e9gdk7',
       };
-      const jwtIdToken = idToken.createJwt({privatePem, claims, options});
+      const jwtIdToken = idToken.createJwt({claims, options});
 
       const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {
         algorithms: ['RS256'],

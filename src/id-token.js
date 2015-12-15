@@ -28,10 +28,10 @@ function isArrayOfStrings(array) {
     && array.every(isNonEmptyString);
 }
 
-function createJwt({privatePem, claims = {}, options: {expiresIn, accessToken, authorizationCode, kid} = {}}) {
+function createJwt({claims = {}, options: {privatePem, expiresIn, accessToken, authorizationCode, kid} = {}}) {
   // Required parameters
   assert.ok(isPemRsaKey(privatePem),
-    'argument "privatePem" must be a RSA Private Key (PEM)');
+    'option "privatePem" must be a RSA Private Key (PEM)');
 
   // Options
   assert.ok(!accessToken || isNonEmptyString(accessToken),
@@ -83,8 +83,7 @@ function createJwt({privatePem, claims = {}, options: {expiresIn, accessToken, a
 export default {
   createJwt,
   withDefaults: (defaults = {}) => ({
-    createJwt: ({privatePem, claims, options}) => createJwt({
-      privatePem: defaults.privatePem || privatePem,
+    createJwt: ({claims, options}) => createJwt({
       claims: Object.assign({}, defaults.claims, claims),
       options: Object.assign({}, defaults.options, options),
     }),
