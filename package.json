@@ -1,6 +1,6 @@
 {
   "name": "id-token",
-  "version": "0.0.6",
+  "version": "1.0.0",
   "description": "OpenID Connect ID Token",
   "author": "Marco Bettiolo <marco@bettiolo.it>",
   "repository": "bettiolo/id-token",
@@ -12,7 +12,8 @@
     "test": "mocha --compilers js:babel-register -R spec -b ./src/**/*.test.js",
     "compile": "babel src/ --optional runtime --ignore *.test.js --out-dir dist --source-maps",
     "spec": "npm run compile && mocha --compilers js:babel-register -R spec -b ./id-token.spec.js",
-    "prepublish": "npm run clean && npm run lint && npm run test && npm run spec"
+    "prepublish": "npm run clean && npm run lint && npm run test && npm run spec",
+    "bump-version": "bump --prompt --commit --tag --push"
   },
   "dependencies": {
     "babel-runtime": "^6.3.19",
@@ -29,7 +30,8 @@
     "eslint-plugin-babel": "^3.0.0",
     "eslint-plugin-react": "^3.11.3",
     "mocha": "^2.3.4",
-    "rsa-pem-from-mod-exp": "^0.8.4"
+    "rsa-pem-from-mod-exp": "^0.8.4",
+    "version-bump-prompt": "^1.5.2"
   },
   "keywords": [
     "id-token",
