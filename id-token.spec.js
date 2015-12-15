@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import {assert} from 'chai';
 import jwt from 'jsonwebtoken';
-import idToken from './dist/id-token.js';
+import idToken from './'; // Follows package.json main entry point
 import getPem from 'rsa-pem-from-mod-exp';
 import publicJwk from './src/test-data/test1-jwk.json';
 
