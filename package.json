@@ -13,7 +13,7 @@
     "compile": "babel src/ --optional runtime --ignore *.test.js --out-dir dist --source-maps",
     "spec": "npm run compile && mocha --compilers js:babel-register -R spec -b ./id-token.spec.js",
     "prepublish": "npm run clean && npm run lint && npm run test && npm run spec",
-    "bump-version": "bump --prompt --commit --tag --push"
+    "bump-version": "bump --prompt --commit --tag --push && npm publish"
   },
   "dependencies": {
     "babel-runtime": "^6.3.19",
