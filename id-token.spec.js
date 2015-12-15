@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { assert } from 'chai';
 import jwt from 'jsonwebtoken';
-import idTokenWithoutDefaults from './index';
+import idTokenWithoutDefaults from './dist/id-token.js';
 import getPem from 'rsa-pem-from-mod-exp';
 import publicJwk from './src/test-data/test1-jwk.json';
 

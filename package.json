@@ -5,12 +5,12 @@
   "author": "Marco Bettiolo <marco@bettiolo.it>",
   "repository": "bettiolo/id-token",
   "license": "ISC",
-  "main": "index.js",
+  "main": "dist/id-token.js",
   "scripts": {
-    "clean": "rm -f index.js",
+    "clean": "rm -f dist/*",
     "lint": "eslint ./",
     "test": "mocha --compilers js:babel/register -R spec -b ./src/**/*.test.js",
-    "compile": "babel --optional runtime src/id-token.js --out-file ./index.js",
+    "compile": "babel src/ --optional runtime --ignore *.test.js --out-dir dist --source-maps",
     "spec": "npm run compile && mocha --compilers js:babel/register -R spec -b ./id-token.spec.js",
     "prepublish": "npm run clean && npm run lint && npm run test && npm run spec"
   },
