@@ -11,25 +11,61 @@ const privatePemPath = path.join(__dirname, `./test-data/test1-private.pem`);
 const privatePem = fs.readFileSync(privatePemPath, 'ascii');
 const publicPem = getPem(publicJwk.n, publicJwk.e);
 const wrongPublicPem = getPem(wrongPublicJwk.n, wrongPublicJwk.e);
+const nowEpoch = Math.floor(Date.now() / 1000);
+const absoluteExpiryIn1Minute = nowEpoch + 60;
 
 describe('idToken', () => {
-  const idToken = idTokenWithoutDefaults.withDefaults({
-    options: {privatePem},
-  });
-
   it(`Has expected methods`, () => {
-    assert.isFunction(idToken.createJwt);
+    assert.isFunction(idTokenWithoutDefaults.createJwt);
+    assert.isFunction(idTokenWithoutDefaults.withDefaults);
   });
 
-  context(`${idToken.createJwt.name}()`, () => {
-    const nowEpoch = Math.floor(Date.now() / 1000);
-    const absoluteExpiryIn1Minute = nowEpoch + 60;
+  context(`${idTokenWithoutDefaults.withDefaults.name}()`, () => {
+    it('Merges defaults with current values', () => {
+      const defaultClaims = {
+        iss: 'http://example.com',
+      };
+      const claims = {
+        sub: 'Abc123',
+        aud: 'xyZ123',
+        exp: absoluteExpiryIn1Minute,
+      };
+      const options = {privatePem};
+      const jwtIdToken = idTokenWithoutDefaults.withDefaults({claims: defaultClaims}).createJwt({claims, options});
+
+      const decodedIdToken = jwt.decode(jwtIdToken);
+      assert.equal(decodedIdToken.iss, 'http://example.com');
+    });
+
+    it('Overwrites default values with current values', () => {
+      const defaultClaims = {
+        iss: 'http://example.com',
+      };
+      const claims = {
+        iss: 'http://foo.com',
+        sub: 'Abc123',
+        aud: 'xyZ123',
+        exp: absoluteExpiryIn1Minute,
+      };
+      const options = {privatePem};
+      const jwtIdToken = idTokenWithoutDefaults.withDefaults({claims: defaultClaims}).createJwt({claims, options});
+
+      const decodedIdToken = jwt.decode(jwtIdToken);
+      assert.equal(decodedIdToken.iss, 'http://foo.com');
+    });
+  });
+
+  context(`${idTokenWithoutDefaults.createJwt.name}()`, () => {
     const defaultClaims = {
       iss: 'http://example.com',
       sub: 'Abc123',
       aud: 'xyZ123',
       exp: absoluteExpiryIn1Minute,
     };
+
+    const idToken = idTokenWithoutDefaults.withDefaults({
+      options: {privatePem},
+    });
 
     it('Signs the token using RS256 algorithm', () => {
       const jwtIdToken = idToken.createJwt({claims: defaultClaims});
