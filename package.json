@@ -9,23 +9,26 @@
   "scripts": {
     "clean": "rm -f dist/*",
     "lint": "eslint ./",
-    "test": "mocha --compilers js:babel/register -R spec -b ./src/**/*.test.js",
+    "test": "mocha --compilers js:babel-register -R spec -b ./src/**/*.test.js",
     "compile": "babel src/ --optional runtime --ignore *.test.js --out-dir dist --source-maps",
-    "spec": "npm run compile && mocha --compilers js:babel/register -R spec -b ./id-token.spec.js",
+    "spec": "npm run compile && mocha --compilers js:babel-register -R spec -b ./id-token.spec.js",
     "prepublish": "npm run clean && npm run lint && npm run test && npm run spec"
   },
   "dependencies": {
-    "babel-runtime": "^5.8.25",
-    "jsonwebtoken": "^5.4.0"
+    "babel-runtime": "^6.3.19",
+    "jsonwebtoken": "^5.4.1"
   },
   "devDependencies": {
-    "babel": "^5.8.23",
-    "babel-eslint": "^4.1.3",
-    "chai": "^3.4.0",
-    "eslint": "^1.7.3",
-    "eslint-config-airbnb": "^0.1.0",
-    "eslint-plugin-react": "^3.6.3",
-    "mocha": "^2.3.3",
+    "babel-cli": "^6.3.17",
+    "babel-eslint": "^5.0.0-beta6",
+    "babel-preset-es2015": "^6.3.13",
+    "babel-register": "^6.3.13",
+    "chai": "^3.4.1",
+    "eslint": "^1.10.3",
+    "eslint-config-airbnb": "^2.1.0",
+    "eslint-plugin-babel": "^3.0.0",
+    "eslint-plugin-react": "^3.11.3",
+    "mocha": "^2.3.4",
     "rsa-pem-from-mod-exp": "^0.8.4"
   },
   "keywords": [

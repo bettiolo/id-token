@@ -76,7 +76,7 @@ function createJwt({privatePem, claims = {}, options: {expiresIn, accessToken, a
     algorithm: alg,
     expiresIn,
     noTimestamp: !!claims.iat,
-    headers: { kid },
+    headers: {kid},
   });
 }
 

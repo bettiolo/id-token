@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import { assert } from 'chai';
+import {assert} from 'chai';
 import jwt from 'jsonwebtoken';
 import idTokenWithoutDefaults from './id-token';
 import getPem from 'rsa-pem-from-mod-exp';
@@ -31,7 +31,7 @@ describe('idToken', () => {
 
     it('Signs the token using RS256 algorithm', () => {
       const jwtIdToken = idToken.createJwt({privatePem, claims: defaultClaims});
-      const decodedIdToken = jwt.decode(jwtIdToken, { complete: true });
+      const decodedIdToken = jwt.decode(jwtIdToken, {complete: true});
 
       assert.equal(decodedIdToken.header.alg, 'RS256');
     });
@@ -165,7 +165,7 @@ describe('idToken', () => {
 
       it('Throws error when claim "aud" not an array of strings', () => {
         const invalidClaims = Object.assign({}, defaultClaims);
-        invalidClaims.aud = [ 12345 ];
+        invalidClaims.aud = [12345];
 
         assert.throw(() => idToken.createJwt({privatePem, claims: invalidClaims}),
           'claim "aud" required (string OR array of strings)');
@@ -239,7 +239,7 @@ describe('idToken', () => {
         const claims = Object.assign({}, defaultClaims);
         claims.iat = 1311280970;
         const jwtIdToken = idToken.createJwt({privatePem, claims});
-        const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
+        const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {algorithms: ['RS256']});
 
         assert.isObject(idTokenPayload);
         assert.equal(idTokenPayload.iat, 1311280970);
@@ -265,7 +265,7 @@ describe('idToken', () => {
         delete claims[claim];
 
         const jwtIdToken = idToken.createJwt({privatePem, claims});
-        const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
+        const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {algorithms: ['RS256']});
 
         assert.isObject(idTokenPayload);
         assert.ok(!idTokenPayload[claim]);
@@ -358,9 +358,9 @@ describe('idToken', () => {
         'option "kid" must be a string');
 
       it('Creates a JWT ID Token with the "kid" header parameter', () => {
-        const options = { kid: '12345abc' };
+        const options = {kid: '12345abc'};
         const jwtIdToken = idToken.createJwt({privatePem, claims: defaultClaims, options});
-        const decodedIdToken = jwt.decode(jwtIdToken, { complete: true });
+        const decodedIdToken = jwt.decode(jwtIdToken, {complete: true});
 
         assert.equal(decodedIdToken.header.kid, '12345abc');
       });

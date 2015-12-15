@@ -1,4 +1,4 @@
-import { assert } from 'chai';
+import {assert} from 'chai';
 import computeHash from './compute-hash';
 
 it(`Is expected function`, () => {

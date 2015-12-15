@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import { assert } from 'chai';
+import {assert} from 'chai';
 import jwt from 'jsonwebtoken';
 import idTokenWithoutDefaults from './dist/id-token.js';
 import getPem from 'rsa-pem-from-mod-exp';
@@ -37,8 +37,8 @@ describe(
       kid: '1e9gdk7',
     };
     const jwtIdToken = idToken.createJwt({privatePem, claims, options});
-    const idTokenPayload = jwt.verify(jwtIdToken, publicPem, { algorithms: ['RS256'] });
-    const idTokenHeader = jwt.decode(jwtIdToken, { complete: true }).header;
+    const idTokenPayload = jwt.verify(jwtIdToken, publicPem, {algorithms: ['RS256']});
+    const idTokenHeader = jwt.decode(jwtIdToken, {complete: true}).header;
 
     it(
     'iss: REQUIRED. Issuer Identifier for the Issuer of the response. The iss value is a ' +
@@ -200,7 +200,7 @@ describe(
         algorithms: ['RS256'],
         ignoreExpiration: true,
       });
-      const idTokenHeader = jwt.decode(jwtIdToken, { complete: true }).header;
+      const idTokenHeader = jwt.decode(jwtIdToken, {complete: true}).header;
 
       assert.equal(idTokenHeader.alg, 'RS256');
       assert.equal(idTokenHeader.kid, '1e9gdk7');
